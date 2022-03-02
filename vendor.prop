@@ -1,3 +1,5 @@
 # Fingerprint
 persist.vendor.fingerprint.type=side
 persist.vendor.fingerprint.sensor_location=1080|960|200
+# USB
+vendor.usb.product_string=Mi 11 Lite 5G
