@@ -293,4 +293,7 @@
     <!-- Control whether the pickup gesture is enabled by default. This value will be used
           during initialization when the setting is still null. -->
     <bool name="config_dozePickupGestureEnabled">false</bool>
+
+    <!-- Determines whether the shell features all run on another thread. -->
+    <bool name="config_enableShellMainThread">true</bool>
 </resources>
