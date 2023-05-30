@@ -12,3 +12,4 @@ MACE_CPP_MIN_VLOG_LEVEL                     u:object_r:vendor_camera_prop:s0
 
 # Global
 ro.product.marketname    u:object_r:build_prop:s0
+ro.product.mod_device    u:object_r:build_prop:s0
