@@ -170,6 +170,9 @@ persist.vendor.fingerprint.sensor_location=1080|960|200|local:463094648085706176
 # FUSE passthrough
 persist.sys.fuse.passthrough.enable=true
 
+# Games
+ro.surface_flinger.game_default_frame_rate_override=120
+
 # Gatekeeper
 vendor.gatekeeper.disable_spu=true
 
