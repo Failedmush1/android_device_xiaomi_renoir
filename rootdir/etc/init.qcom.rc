@@ -233,6 +233,7 @@ on post-fs-data
     chmod 0660 /sys/devices/virtual/touch/touch_dev/bump_sample_rate
 
 on property:sys.boot_completed=1
+    setprop vendor.post_boot.parsed 1
     # Enable UFS clock scaling back
     write /sys/bus/platform/devices/1d84000.ufshc/clkscale_enable 1
     # Enable UFS auto_hibern8 back
