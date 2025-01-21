@@ -111,6 +111,28 @@ class XiaomiUdfpsHandler : public UdfpsHandler {
         }).detach();
     }
 
+    void notify(udfpshandler_msg_t msg) {
+        switch (msg.type) {
+            case UDFPSHANDLER_MSG_FINGER_DOWN:
+                onFingerDown(msg.data.finger_down_msg.x, msg.data.finger_down_msg.y,
+                             msg.data.finger_down_msg.minor, msg.data.finger_down_msg.major);
+                break;
+            case UDFPSHANDLER_MSG_FINGER_UP:
+                onFingerUp();
+                break;
+            case UDFPSHANDLER_MSG_ACQUIRED:
+                onAcquired(msg.data.acquired_msg.result, msg.data.acquired_msg.vendor);
+                break;
+            case UDFPSHANDLER_MSG_ACQUIRED:
+                cancel();
+            default:
+                LOG(DEBUG) << "unimplemented message of type " << msg.type;
+        }
+    }
+
+  private:
+    fingerprint_device_t* mDevice;
+
     void onFingerDown(uint32_t /*x*/, uint32_t /*y*/, float /*minor*/, float /*major*/) {
         set(FOD_STATUS_PATH, FOD_STATUS_ON);
     }
@@ -137,9 +159,6 @@ class XiaomiUdfpsHandler : public UdfpsHandler {
         set(FOD_STATUS_PATH, FOD_STATUS_OFF);
         set(FOD_HBM_PATH, FOD_HBM_OFF);
     }
-
-  private:
-    fingerprint_device_t* mDevice;
 };
 
 static UdfpsHandler* create() {
