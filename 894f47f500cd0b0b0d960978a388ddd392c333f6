@@ -16,6 +16,24 @@
       "message": "why are there two UDFPSHANDLER_MSG_ACQUIRED cases?",
       "revId": "894f47f500cd0b0b0d960978a388ddd392c333f6",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f170e56_441688c4",
+        "filename": "udfps/UdfpsHandler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-02-24T12:46:00Z",
+      "side": 1,
+      "message": "oops, the second one should be UDFPSHANDLER_MSG_CANCEL",
+      "parentUuid": "1c4f60b4_8cba2749",
+      "revId": "894f47f500cd0b0b0d960978a388ddd392c333f6",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
