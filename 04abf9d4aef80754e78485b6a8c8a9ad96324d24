@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d508abc9_6c640316",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 22176
+      },
+      "writtenOn": "2025-03-18T21:00:36Z",
+      "side": 1,
+      "message": "You could pick https://review.lineageos.org/q/I0bdd4d63b60a1e29cdd69e71f7268932a105c16b afterwards.\n\nAlso: https://github.com/LineageOS/android_hardware_qcom-caf_common/commit/a96669b5092e6f18eace1f5ac9eb0a9c0367e08e",
+      "revId": "04abf9d4aef80754e78485b6a8c8a9ad96324d24",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
