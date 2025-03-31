@@ -46,6 +46,8 @@ lib_fixups: lib_fixups_user_type = {
 blob_fixups: blob_fixups_user_type = {
     'system_ext/etc/init/wfdservice.rc': blob_fixup()
         .regex_replace(r'(start|stop) wfdservice\b', r'\1 wfdservice64'),
+    'system_ext/etc/seccomp_policy/wfdservice64.policy': blob_fixup()
+        .add_line_if_missing('rt_tgsigqueueinfo: 1'),
     'system_ext/lib64/libwfdmmsrc_system.so': blob_fixup()
         .add_needed('libgui_shim.so'),
     'system_ext/lib64/libwfdservice.so': blob_fixup()
