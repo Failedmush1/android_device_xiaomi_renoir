@@ -16,6 +16,24 @@
       "message": "seems like allowing extra syscalls wasn\u0027t necessary after all? I\u0027ll just abandon my original change.",
       "revId": "c2c6858236421c4cd52ec0726a75c0842a5d59d5",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "66284612_2cb0a80b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 21290
+      },
+      "writtenOn": "2025-04-03T20:26:10Z",
+      "side": 1,
+      "message": "Was about to say the same :\u0027D\nIt\u0027s not necessary for me either.",
+      "parentUuid": "bbe1cf55_8082fdaa",
+      "revId": "c2c6858236421c4cd52ec0726a75c0842a5d59d5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
