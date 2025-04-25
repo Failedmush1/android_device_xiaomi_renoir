@@ -19,3 +19,9 @@ allowxperm system_app apk_data_file:file ioctl {
   INCFS_IOCTL_GET_BLOCK_COUNT
   INCFS_IOCTL_GET_FILLED_BLOCKS
 };
+
+# Allow system_app to set ZRAM property
+set_prop(system_app, vendor_zram_prop)
+get_prop(system_app, vendor_zram_prop)
+set_prop(system_app, vendor_default_prop)
+get_prop(system_app, vendor_default_prop)
