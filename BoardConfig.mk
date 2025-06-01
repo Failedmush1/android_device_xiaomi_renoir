@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-COMMON_PATH := device/xiaomi/sm8350-common
+DEVICE_PATH := device/xiaomi/renoir
 
 BOARD_VENDOR := xiaomi
 
@@ -48,39 +48,37 @@ AUDIO_FEATURE_ENABLED_PROXY_DEVICE := true
 BOARD_SUPPORTS_SOUND_TRIGGER := true
 TARGET_PROVIDES_AUDIO_EXTNS := true
 
+# Board
+TARGET_BOOTLOADER_BOARD_NAME := renoir
+
 # Bootloader
 TARGET_NO_BOOTLOADER := true
 
 # Camera
-TARGET_CAMERA_SERVICE_EXT_LIB := //$(COMMON_PATH):libcameraservice_extension.xiaomi_sm8350
+TARGET_CAMERA_SERVICE_EXT_LIB := //$(DEVICE_PATH):libcameraservice_extension.xiaomi_sm8350
 
 # Display
 TARGET_SCREEN_DENSITY ?= 440
 
 # Filesystem
-TARGET_FS_CONFIG_GEN := $(COMMON_PATH)/config.fs
+TARGET_FS_CONFIG_GEN := $(DEVICE_PATH)/config.fs
 
 # GPS
 BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := default
 
 # HIDL
 DEVICE_MATRIX_FILE := hardware/qcom-caf/common/compatibility_matrix.xml
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/hidl/manifest.xml
 
 DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
     hardware/qcom-caf/common/vendor_framework_compatibility_matrix.xml \
     hardware/xiaomi/vintf/xiaomi_framework_compatibility_matrix.xml \
     vendor/lineage/config/device_framework_matrix.xml \
-    $(COMMON_PATH)/hidl/vendor_framework_compatibility_matrix.xml \
-    $(COMMON_PATH)/hidl/xiaomi_framework_compatibility_matrix.xml
+    $(DEVICE_PATH)/hidl/vendor_framework_compatibility_matrix.xml \
+    $(DEVICE_PATH)/hidl/xiaomi_framework_compatibility_matrix.xml
 
 DEVICE_MANIFEST_FILE := \
-    $(COMMON_PATH)/hidl/manifest_lahaina.xml \
-    $(COMMON_PATH)/hidl/manifest_xiaomi.xml
-
-ifeq ($(TARGET_HAS_UDFPS),true)
-DEVICE_MANIFEST_FILE += \
-    $(COMMON_PATH)/hidl/manifest_udfps.xml
-endif
+    $(DEVICE_PATH)/hidl/manifest.xml
 
 # Kernel
 BOARD_KERNEL_BASE := 0x00000000
@@ -94,7 +92,7 @@ BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 TARGET_KERNEL_ADDITIONAL_FLAGS := TARGET_PRODUCT=$(PRODUCT_DEVICE)
 TARGET_KERNEL_NO_GCC := true
 TARGET_KERNEL_SOURCE := kernel/xiaomi/sm8350
-TARGET_KERNEL_CONFIG := vendor/lahaina-qgki_defconfig vendor/debugfs.config vendor/xiaomi_QGKI.config
+TARGET_KERNEL_CONFIG := vendor/lahaina-qgki_defconfig vendor/debugfs.config vendor/xiaomi_QGKI.config vendor/renoir_QGKI.config
 
 BOARD_KERNEL_CMDLINE += androidboot.console=ttyMSM0
 BOARD_KERNEL_CMDLINE += androidboot.hardware=qcom
@@ -109,6 +107,15 @@ BOARD_KERNEL_CMDLINE += pcie_ports=compat
 BOARD_KERNEL_CMDLINE += iptable_raw.raw_before_defrag=1
 BOARD_KERNEL_CMDLINE += ip6table_raw.raw_before_defrag=1
 BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=recovery
+
+# Kernel modules
+BOOT_KERNEL_MODULES := \
+    focaltech_touch.ko \
+    goodix_core.ko \
+    hwid.ko \
+    msm_drm.ko \
+    xiaomi_touch.ko
+BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOOT_KERNEL_MODULES)
 
 # Partitions
 BOARD_FLASH_BLOCK_SIZE := 131072
@@ -129,7 +136,6 @@ BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 
--include vendor/lineage/config/BoardConfigReservedSize.mk
 BOARD_SYSTEM_EXTIMAGE_PARTITION_RESERVED_SIZE := 104857600
 BOARD_VENDORIMAGE_PARTITION_RESERVED_SIZE := 104857600
 
@@ -139,14 +145,18 @@ TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 TARGET_COPY_OUT_VENDOR := vendor
 TARGET_COPY_OUT_VENDOR_DLKM := vendor_dlkm
 
+# Partitions Reserve for GAPPS and DTBOIMG
+BOARD_DTBOIMG_PARTITION_SIZE := 25165824
+-include vendor/lineage/config/BoardConfigReservedSize.mk
+
 # Platform
 TARGET_BOARD_PLATFORM := lahaina
 
 # Properties
-TARGET_ODM_PROP += $(COMMON_PATH)/odm.prop
-TARGET_SYSTEM_PROP += $(COMMON_PATH)/system.prop
-TARGET_SYSTEM_EXT_PROP += $(COMMON_PATH)/system_ext.prop
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor.prop
+TARGET_ODM_PROP += $(DEVICE_PATH)/properties/odm.prop
+TARGET_SYSTEM_PROP += $(DEVICE_PATH)/properties/system.prop
+TARGET_SYSTEM_EXT_PROP += $(DEVICE_PATH)/properties/system_ext.prop
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/properties/vendor.prop
 
 # QCOM
 BOARD_USES_QCOM_HARDWARE := true
@@ -154,7 +164,7 @@ BOARD_USES_QCOM_HARDWARE := true
 # Recovery
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
-TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/rootdir/etc/fstab.qcom
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
@@ -169,9 +179,9 @@ VENDOR_SECURITY_PATCH := 2025-03-01
 include device/lineage/sepolicy/libperfmgr/sepolicy.mk
 include device/qcom/sepolicy_vndr/SEPolicy.mk
 
-SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/private
-SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/public
-BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/vendor
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/private
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/public
+BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 SELINUX_IGNORE_NEVERALLOWS := true
 
 # Verified Boot
@@ -206,4 +216,4 @@ WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # Inherit proprietary blobs
-include vendor/xiaomi/sm8350-common/BoardConfigVendor.mk
+include vendor/xiaomi/renoir/BoardConfigVendor.mk
