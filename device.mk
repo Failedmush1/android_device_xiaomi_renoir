@@ -31,7 +31,7 @@ $(call soong_config_set,qti_vibrator,use_effect_stream,true)
 
 # WiFi
 PRODUCT_PACKAGES += \
-    TargetWifiOverlay
+    WifiOverlayRenoir
 
 # Call the proprietary setup
 $(call inherit-product, vendor/xiaomi/renoir/renoir-vendor.mk)
