@@ -17,9 +17,15 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/sound_trigger_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_shima/sound_trigger_platform_info.xml
 
 # Overlays
-DEVICE_PACKAGE_OVERLAYS += \
-    $(LOCAL_PATH)/overlay \
-    $(LOCAL_PATH)/overlay-lineage
+PRODUCT_PACKAGES += \
+    ApertureOverlayRenoir
+
+PRODUCT_PACKAGES += \
+    FrameworkOverlayRenoir \
+    SettingsOverlayRenoir \
+    SettingsProviderOverlayRenoir \
+    SystemUIOverlayRenoir \
+    WifiOverlayRenoir
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
@@ -28,10 +34,6 @@ PRODUCT_SOONG_NAMESPACES += \
 # Vibrator
 $(call soong_config_set,qti_vibrator,effect_lib,libqtivibratoreffect.xiaomi)
 $(call soong_config_set,qti_vibrator,use_effect_stream,true)
-
-# WiFi
-PRODUCT_PACKAGES += \
-    WifiOverlayRenoir
 
 # Call the proprietary setup
 $(call inherit-product, vendor/xiaomi/renoir/renoir-vendor.mk)
