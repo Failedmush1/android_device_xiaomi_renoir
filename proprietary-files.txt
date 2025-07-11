@@ -738,11 +738,12 @@ vendor/lib64/vendor.qti.esepowermanager@1.1.so
 vendor/etc/felica/common.cfg
 vendor/etc/felica/mfm.cfg
 vendor/etc/felica/mfs.cfg
-# Felica App
-product/app/MobileFeliCaClient/MobileFeliCaClient.apk
-product/app/MobileFeliCaMenuMainApp/MobileFeliCaMenuMainApp.apk
-product/app/MobileFeliCaSettingApp/MobileFeliCaSettingApp.apk
-product/app/MobileFeliCaWebPluginBoot/MobileFeliCaWebPluginBoot.apk
+
+#Felica App
+product/app/MobileFeliCaClient/MobileFeliCaClient.apk;PRESIGNED
+product/app/MobileFeliCaMenuMainApp/MobileFeliCaMenuMainApp.apk;PRESIGNED
+product/app/MobileFeliCaSettingApp/MobileFeliCaSettingApp.apk;PRESIGNED
+product/app/MobileFeliCaWebPluginBoot/MobileFeliCaWebPluginBoot.apk;PRESIGNED
 
 # Fingerprint
 vendor/lib64/hw/fingerprint.fpc.so:vendor/lib64/hw/fingerprint.fpc.lahaina.so;FIX_SONAME
