@@ -22,9 +22,9 @@
     <string name="lunaris_processor_code_title">Processor</string>
     <string name="lunaris_battery_type_title">Battery</string>
     <string name="lunaris_screen_title">Screen</string>
-    <string name="lunaris_device_message">Mi 10T/PRO</string>
-    <string name="lunaris_processor_code_message">Snapdragon® 865</string>
-    <string name="lunaris_battery_type_message">5000 mAh</string>
+    <string name="lunaris_device_message">Mi 11 Lite 5G</string>
+    <string name="lunaris_processor_code_message">Snapdragon® 780G</string>
+    <string name="lunaris_battery_type_message">4150 mAh</string>
     <string name="lunaris_screen_message">IPS LCD, 144Hz</string>
     
 </resources>
