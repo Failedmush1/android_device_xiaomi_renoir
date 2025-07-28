@@ -10,6 +10,9 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+# Lunaris Flags
+ro.paranoid.maintainer=Failedmush 
+
 WITH_GMS := false
 WITH_BCR := true
 TARGET_OPTIMIZED_DEXOPT := true
