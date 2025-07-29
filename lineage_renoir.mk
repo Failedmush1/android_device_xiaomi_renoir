@@ -14,7 +14,7 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 ro.paranoid.maintainer=Failedmush 
 
 WITH_GMS := false
-WITH_BCR := true
+WITH_BCR := false
 TARGET_OPTIMIZED_DEXOPT := true
 TARGET_DEFAULT_PIXEL_LAUNCHER := false
 
