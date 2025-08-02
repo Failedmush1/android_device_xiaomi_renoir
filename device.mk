@@ -4,6 +4,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# Camera
+$(call inherit-product-if-exists, vendor/xiaomi/camera/miuicamera.mk)
+
+PRODUCT_SYSTEM_PROPERTIES += \
+    ro.miui.notch=1 \
+    ro.product.mod_device=renoir_global
+
 # Inherit from sm8350-common
 $(call inherit-product, device/xiaomi/sm8350-common/common.mk)
 
