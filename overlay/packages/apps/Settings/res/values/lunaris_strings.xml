@@ -24,6 +24,6 @@
     <string name="lunaris_device_message">Mi 11 Lite 5G</string>
     <string name="lunaris_processor_code_message">Snapdragon® 780G</string>
     <string name="lunaris_battery_type_message">4250 mAh</string>
-    <string name="lunaris_screen_message">LCD, 90Hz</string>
+    <string name="lunaris_screen_message">LCD 60Hz,90Hz</string>
      
 </resources>
