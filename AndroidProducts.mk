@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/lineage_renoir.mk
-
 COMMON_LUNCH_CHOICES := \
-    lineage_renoir-user \
-    lineage_renoir-userdebug \
-    lineage_renoir-eng
+    voltage_renoir-user \
+    voltage_renoir-userdebug \
+    voltage_renoir-eng
+
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/voltage_renoir.mk
