@@ -10,6 +10,7 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+-include vendor/lineage-priv/keys/keys.mk
 
 WITH_GMS := false
 WITH_BCR := true
