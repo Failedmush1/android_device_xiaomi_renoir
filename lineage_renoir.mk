@@ -10,6 +10,8 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+-include vendor/lineage-priv/keys/keys.mk
+
 # bringup
 SUPERIOR_OFFICIAL := false
 TARGET_BOOT_ANIMATION_RES := 1080
