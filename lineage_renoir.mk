@@ -12,7 +12,6 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
--export WITH_GMS:=false
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
