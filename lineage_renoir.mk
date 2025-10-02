@@ -12,11 +12,6 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
-WITH_GMS := false
-WITH_BCR := true
-TARGET_OPTIMIZED_DEXOPT := true
-TARGET_DEFAULT_PIXEL_LAUNCHER := false
-
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
