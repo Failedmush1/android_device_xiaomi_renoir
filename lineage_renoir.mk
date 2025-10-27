@@ -11,7 +11,7 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 # Additions
-$(call inherit-product-if-exists, vendor/gapps/common.mk)
+$(call inherit-product, vendor/gapps/common/all.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
