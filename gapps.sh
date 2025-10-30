@@ -26,7 +26,7 @@ GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit common product configuration. (NOTE: Update this line for crDroid inheritance!)
+# Inherit some common Lineage stuff. (NOTE: This path may need to be updated for crDroid!)
 \$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
@@ -62,7 +62,7 @@ if [ ! -d "vendor/gapps" ]; then
     echo "GApps vendor directory not found. Cloning vendor/gapps..."
     git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
     if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to clone vendor/gapps. Check the URL and try manually."
+        echo "ERROR: Failed to clone vendor/gapps. Check the URL and run manually: git clone $GAPPS_URL vendor/gapps -b $GAPPS_BRANCH"
         exit 1
     fi
 else
