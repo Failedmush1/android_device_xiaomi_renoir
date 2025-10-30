@@ -2,7 +2,7 @@
 
 # --- Build Configuration ---
 
-# 1. GApps Repository Details (MindTheGapps is the source)
+# 1. GApps Repository Details (MindTheGapps)
 GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
@@ -23,8 +23,7 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# FINAL FIX: Only include the GApps product file and remove all GMS flags 
-# (which were causing the AOSP 'trunk_staging' crash).
+# FINAL FIX: Only include the GApps product file.
 \$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
 
 PRODUCT_BRAND := Xiaomi
@@ -45,18 +44,23 @@ EOF
 
 # --- Setup Execution ---
 
-# NOTE: The GApps repository should have been cloned manually in the previous step.
+# 1. CLONE GAPPS REPO (Safeguard in case it was deleted)
+if [ ! -d "vendor/gapps" ]; then
+    echo "GApps vendor directory not found. Cloning MindTheGapps..."
+    git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
+fi
 
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-echo "Re-sourcing envsetup.sh to register new vendor files."
-source build/envsetup.sh
+# 2. CRITICAL CHANGE: LUNCH FIRST (before GApps swap) to avoid the 'trunk_staging' crash.
+echo "Lunching target: $LUNCH_TARGET (Initial environment setup)"
+lunch "$LUNCH_TARGET"
 
-# 1. WRITE TEMPORARY GMS FILE
+# 3. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
-# 2. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
+# 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 if [ -f "$VANILLA_MK" ]; then
     mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
@@ -66,17 +70,11 @@ else
     exit 1
 fi
 
-# 3. CLEANUP AND LUNCH
-echo "Running make installclean..."
-make installclean
-
-echo "Lunching target: $LUNCH_TARGET (GMS Core Enabled)"
-lunch "$LUNCH_TARGET"
-
-# 4. PAUSE AND INSTRUCTIONS
+# 5. INSTRUCTIONS
 echo "=========================================================="
-echo "✅ BUILD SETUP COMPLETE. GMS CORE CONFIGURATION IS NOW ACTIVE."
+echo "✅ BUILD SETUP COMPLETE."
 echo "=========================================================="
+echo "The build environment is now loaded, and the GApps configuration is active."
 echo "To start the build, run this command manually:"
 echo ""
 echo "    make -j\$(nproc --all)"
