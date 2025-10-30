@@ -2,14 +2,14 @@
 
 # --- Build Configuration ---
 
-# 1. GApps Repository Details (from your provided URL)
+# 1. GApps Repository Details
 GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. CRITICAL FIX: Change LUNCH_TARGET to the correct crDroid format.
+# 2. CRITICAL FIX: Set LUNCH_TARGET to the correct crDroid format: crdroid_<codename>-<variant>
 LUNCH_TARGET=crdroid_renoir-user 
 
-# Set the number of threads for the build (for the user's manual step)
+# Set the number of threads for the build
 THREADS=$(nproc --all)
 
 # Define the paths for clarity
@@ -23,15 +23,13 @@ GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff. (NOTE: This path may need to be updated for crDroid!)
-\$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+# CRITICAL FIX: Inherit the common crDroid product config instead of Lineage
+\$(call inherit-product, vendor/crDroid/config/common.mk) 
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# Gms CORE Flags (ADDED BACK from gapps.txt)
+# Gms CORE Flags
 WITH_GMS := true
-TARGET_CORE_GMS := true
-TARGET_CORE_GMS_EXTRAS := false
 
 # CRITICAL FIX: This line activates the packages from the 'vendor/gapps' folder.
 \$(call inherit-product, vendor/gapps/build/gapps-packages.mk)
@@ -40,7 +38,8 @@ PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := M2101K9R
-PRODUCT_NAME := lineage_renoir
+# CRITICAL FIX: Change PRODUCT_NAME to the crDroid format
+PRODUCT_NAME := crdroid_renoir
 
 PRODUCT_BUILD_PROP_OVERRIDES += \\
     BuildDesc="renoir_global-user 13 TKQ1.220829.002 V14.0.7.0.TKIMIXM release-keys" \\
@@ -62,6 +61,9 @@ if [ ! -d "vendor/gapps" ]; then
         echo "ERROR: Failed to clone vendor/gapps. Check the URL and run manually: git clone $GAPPS_URL vendor/gapps -b $GAPPS_BRANCH"
         exit 1
     fi
+    # FIX FOR RACE CONDITION: Wait a few seconds to let the filesystem stabilize
+    echo "Cloning complete. Waiting 5 seconds to prevent race condition..."
+    sleep 5
 else
     echo "GApps vendor directory already exists. Skipping clone."
 fi
@@ -70,6 +72,7 @@ echo "Setting up build environment..."
 source build/envsetup.sh
 
 # 2. CRITICAL FIX: Re-source envsetup.sh to recognize the newly cloned vendor/gapps folder
+#    This helps resolve the 'gapps-packages.mk does not exist' error.
 echo "Re-sourcing envsetup.sh to register new vendor files."
 source build/envsetup.sh
 
@@ -78,8 +81,14 @@ echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
 # 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
-mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
-mv "$TEMP_GMS_MK" "$VANILLA_MK"
+# Check if the LineageOS MK file exists before moving it
+if [ -f "$VANILLA_MK" ]; then
+    mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
+    mv "$TEMP_GMS_MK" "$VANILLA_MK"
+else
+    echo "WARNING: Original file $VANILLA_MK not found. Creating it with GMS configuration."
+    mv "$TEMP_GMS_MK" "$VANILLA_MK"
+fi
 
 # 5. CLEANUP AND LUNCH
 echo "Running make installclean..."
@@ -98,5 +107,5 @@ echo "    make -j$(nproc --all)"
 echo ""
 echo "To clean up and restore your Vanilla configuration, run this command:"
 echo ""
-echo "    mv \"$VANILLA_MK.vanilla_backup\" \"$VANILLA_MK\""
+echo "    mv \"$VANILLA_MK.vanilla_backup\" \"$VANILLA_MK\" 2>/dev/null"
 echo "=========================================================="
