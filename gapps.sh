@@ -2,7 +2,7 @@
 
 # --- Build Configuration ---
 
-# 1. GApps Repository Details (Updated to MindTheGapps)
+# 1. GApps Repository Details (MindTheGapps is the source)
 GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
@@ -13,7 +13,7 @@ VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
 
-# --- GMS Core Configuration (MindTheGapps Path) ---
+# --- GMS Core Configuration (Minimalist Approach) ---
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -23,12 +23,8 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# Gms CORE Flags
-WITH_GMS := true
-TARGET_CORE_GMS := true
-TARGET_CORE_GMS_EXTRAS := false
-
-# FINAL FIX: Using the highly compatible and standard MindTheGapps vendor file path.
+# FINAL FIX: Only include the GApps product file and remove all GMS flags 
+# (which were causing the AOSP 'trunk_staging' crash).
 \$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
 
 PRODUCT_BRAND := Xiaomi
@@ -49,7 +45,7 @@ EOF
 
 # --- Setup Execution ---
 
-# NOTE: Cloning is now done manually outside the script for better control.
+# NOTE: The GApps repository should have been cloned manually in the previous step.
 
 echo "Setting up build environment..."
 source build/envsetup.sh
