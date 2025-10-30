@@ -2,7 +2,11 @@
 
 # --- Build Configuration ---
 
-# Fix the fatal lunch target syntax error.
+# 1. GApps Repository Details (from your provided URL)
+GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
+GAPPS_BRANCH="baklava"
+
+# 2. Fix the fatal lunch target syntax error.
 # !!! CRITICAL: CHANGE THIS TO YOUR CRDROID TARGET (e.g., crDroid_renoir-user) !!!
 LUNCH_TARGET=lineage_renoir-user
 
@@ -17,12 +21,12 @@ TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
 # --- GMS Core Configuration (Stored as a string in the script) ---
 
-# CRITICAL: This now contains the GMS flags and the GApps vendor inheritance.
+# This includes the GMS flags and the GApps vendor inheritance.
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff. (NOTE: This path may need to be updated for crDroid!)
+# Inherit common product configuration. (NOTE: Update this line for crDroid inheritance!)
 \$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
@@ -32,7 +36,7 @@ WITH_GMS := true
 TARGET_CORE_GMS := true
 TARGET_CORE_GMS_EXTRAS := false
 
-# CRITICAL FIX: This line activates the packages from the 'vendor/gapps' folder you just cloned.
+# CRITICAL FIX: This line activates the packages from the 'vendor/gapps' folder.
 \$(call inherit-product, vendor/gapps/build/gapps-packages.mk)
 
 PRODUCT_BRAND := Xiaomi
@@ -53,25 +57,38 @@ EOF
 
 # --- Setup Execution ---
 
+# 1. CLONE GAPPS REPO IF IT DOESN'T EXIST
+if [ ! -d "vendor/gapps" ]; then
+    echo "GApps vendor directory not found. Cloning vendor/gapps..."
+    git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to clone vendor/gapps. Check the URL and try manually."
+        exit 1
+    fi
+else
+    echo "GApps vendor directory already exists. Skipping clone."
+fi
+
+
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 1. WRITE TEMPORARY GMS FILE
+# 2. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
-# 2. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
+# 3. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
 mv "$TEMP_GMS_MK" "$VANILLA_MK"
 
-# 3. CLEANUP AND LUNCH
+# 4. CLEANUP AND LUNCH
 echo "Running make installclean..."
 make installclean
 
 echo "Lunching target: $LUNCH_TARGET (GMS Core Enabled)"
 lunch "$LUNCH_TARGET"
 
-# 4. PAUSE AND INSTRUCTIONS
+# 5. PAUSE AND INSTRUCTIONS
 echo "=========================================================="
 echo "✅ BUILD SETUP COMPLETE. GMS CORE CONFIGURATION IS NOW ACTIVE."
 echo "=========================================================="
