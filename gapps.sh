@@ -13,7 +13,7 @@ VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="/tmp/temp_gms.mk"
 
 
-# --- GMS Core Configuration (Direct Package Injection) ---
+# --- GMS Core Configuration (Minimalist Approach - MindTheGapps) ---
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -23,22 +23,8 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# Gms CORE Flags
-# These flags enable GMS-related configurations in the core build system.
-WITH_GMS := true
-TARGET_CORE_GMS := true
-TARGET_CORE_GMS_EXTRAS := false
-
-# CRITICAL FINAL FIX: MANUAL INJECTION of CORE PACKAGES
-# This bypasses the conflicting GApps vendor Makefile inheritance entirely.
-PRODUCT_PACKAGES += \
-    GmsCore \
-    GoogleServicesFramework \
-    GoogleBackupTransport \
-    GoogleFeedback \
-    GoogleContactsSyncAdapter \
-    PrebuiltBugle \
-    WebViewGoogle
+# CRITICAL FINAL FIX: Using the verified MindTheGapps inclusion file path: common/common-vendor.mk
+\$(call inherit-product-if-exists, vendor/gapps/common/common-vendor.mk)
 
 # CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
 PRODUCT_SOONG_NAMESPACES += vendor/gapps
