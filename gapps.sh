@@ -6,14 +6,14 @@
 GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. PRODUCT_NAME for the build.
-PRODUCT_NAME=lineage_renoir 
+# 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
+LUNCH_TARGET=lineage_renoir 
 DEVICE_PATH="device/xiaomi/renoir"
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="/tmp/temp_gms.mk"
 
 
-# --- GMS Core Configuration (Minimalist Approach - MindTheGapps) ---
+# --- GMS Core Configuration (Direct Package Injection) ---
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -23,8 +23,22 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# CRITICAL FINAL FIX: Using the highly probable correct MindTheGapps inclusion file path.
-\$(call inherit-product-if-exists, vendor/gapps/common/common-vendor.mk)
+# Gms CORE Flags
+# These flags enable GMS-related configurations in the core build system.
+WITH_GMS := true
+TARGET_CORE_GMS := true
+TARGET_CORE_GMS_EXTRAS := false
+
+# CRITICAL FINAL FIX: MANUAL INJECTION of CORE PACKAGES
+# This bypasses the conflicting GApps vendor Makefile inheritance entirely.
+PRODUCT_PACKAGES += \
+    GmsCore \
+    GoogleServicesFramework \
+    GoogleBackupTransport \
+    GoogleFeedback \
+    GoogleContactsSyncAdapter \
+    PrebuiltBugle \
+    WebViewGoogle
 
 # CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
 PRODUCT_SOONG_NAMESPACES += vendor/gapps
@@ -48,7 +62,7 @@ EOF
 # --- Setup Execution ---
 
 # 1. CLONE GAPPS REPO (Safeguard in case it was deleted)
-if [ ! -d "vendor/gapps" ]; then
+if [! -d "vendor/gapps" ]; then
     echo "GApps vendor directory not found. Cloning MindTheGapps..."
     git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
 fi
