@@ -7,7 +7,7 @@ GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
 # 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
-LUNCH_TARGET=lineage_renoir-user 
+LUNCH_TARGET=lineage_renoir 
 
 # Define the paths for clarity
 DEVICE_PATH="device/xiaomi/renoir"
@@ -31,8 +31,8 @@ WITH_GMS := true
 TARGET_CORE_GMS := true
 TARGET_CORE_GMS_EXTRAS := false
 
-# CRITICAL FIX: Changed path to vendor/gapps/common.mk based on your repository structure.
-\$(call inherit-product-if-exists, vendor/gapps/common.mk)
+# FINAL CRITICAL FIX: Using the discovered path to the GApps main config file.
+\$(call inherit-product-if-exists, vendor/gapps/build/main.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
@@ -53,7 +53,7 @@ EOF
 
 # --- Setup Execution ---
 
-# 1. CLONE GAPPS REPO IF IT DOESN'T EXIST (Skipping this will be faster if it's already there)
+# 1. CLONE GAPPS REPO IF IT DOES'T EXIST
 if [ ! -d "vendor/gapps" ]; then
     echo "GApps vendor directory not found. Cloning vendor/gapps..."
     git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
