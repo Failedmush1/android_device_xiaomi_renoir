@@ -6,9 +6,8 @@
 GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. Fix the fatal lunch target syntax error.
-# !!! CRITICAL: CHANGE THIS TO YOUR CRDROID TARGET (e.g., crDroid_renoir-user) !!!
-LUNCH_TARGET=lineage_renoir-user
+# 2. CRITICAL FIX: Change LUNCH_TARGET to the correct crDroid format.
+LUNCH_TARGET=crdroid_renoir-user 
 
 # Set the number of threads for the build (for the user's manual step)
 THREADS=$(nproc --all)
@@ -20,8 +19,6 @@ TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
 
 # --- GMS Core Configuration (Stored as a string in the script) ---
-
-# This includes the GMS flags and the GApps vendor inheritance.
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -69,26 +66,29 @@ else
     echo "GApps vendor directory already exists. Skipping clone."
 fi
 
-
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 2. WRITE TEMPORARY GMS FILE
+# 2. CRITICAL FIX: Re-source envsetup.sh to recognize the newly cloned vendor/gapps folder
+echo "Re-sourcing envsetup.sh to register new vendor files."
+source build/envsetup.sh
+
+# 3. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
-# 3. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
+# 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
 mv "$TEMP_GMS_MK" "$VANILLA_MK"
 
-# 4. CLEANUP AND LUNCH
+# 5. CLEANUP AND LUNCH
 echo "Running make installclean..."
 make installclean
 
 echo "Lunching target: $LUNCH_TARGET (GMS Core Enabled)"
 lunch "$LUNCH_TARGET"
 
-# 5. PAUSE AND INSTRUCTIONS
+# 6. PAUSE AND INSTRUCTIONS
 echo "=========================================================="
 echo "✅ BUILD SETUP COMPLETE. GMS CORE CONFIGURATION IS NOW ACTIVE."
 echo "=========================================================="
