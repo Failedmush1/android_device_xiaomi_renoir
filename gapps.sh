@@ -1,15 +1,19 @@
 #!/bin/bash
 
 # --- Build Configuration ---
-GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
+
+# 1. GApps Repository Details (Updated to MindTheGapps)
+GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
+
+# 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
 LUNCH_TARGET=lineage_renoir 
 DEVICE_PATH="device/xiaomi/renoir"
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
 
-# --- GMS Core Configuration (Manually Injecting Packages) ---
+# --- GMS Core Configuration (MindTheGapps Path) ---
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -20,24 +24,12 @@ GMS_CONFIG=$(cat <<EOF
 -include vendor/lineage-priv/keys/keys.mk
 
 # Gms CORE Flags
-# These flags enable GMS-related configurations in the core build system.
 WITH_GMS := true
 TARGET_CORE_GMS := true
 TARGET_CORE_GMS_EXTRAS := false
 
-# CRITICAL FIX: MANUALLY INJECTING PACKAGES TO AVOID CONFLICTING MAIN.MK FILE
-# This bypasses the logic that was causing the "trunk_staging" error.
-PRODUCT_PACKAGES += \
-    GmsCore \
-    GoogleServicesFramework \
-    GooglePackageInstaller \
-    SetupWizardPrebuilt \
-    PrebuiltGmsCore
-
-# This is often needed by GApps setup:
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.setupwizard.rotation_locked=true \
-    ro.setupwizard.require_network=true
+# FINAL FIX: Using the highly compatible and standard MindTheGapps vendor file path.
+\$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
@@ -57,31 +49,18 @@ EOF
 
 # --- Setup Execution ---
 
-# 1. CLONE GAPPS REPO IF IT DOES'T EXIST
-if [ ! -d "vendor/gapps" ]; then
-    echo "GApps vendor directory not found. Cloning vendor/gapps..."
-    git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to clone vendor/gapps. Check the URL and run manually: git clone $GAPPS_URL vendor/gapps -b $GAPPS_BRANCH"
-        exit 1
-    fi
-    echo "Cloning complete. Waiting 5 seconds to prevent race condition..."
-    sleep 5
-else
-    echo "GApps vendor directory already exists. Skipping clone."
-fi
+# NOTE: Cloning is now done manually outside the script for better control.
 
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 2. CRITICAL FIX: Re-source envsetup.sh to register new vendor files.
 echo "Re-sourcing envsetup.sh to register new vendor files."
 source build/envsetup.sh
 
-# 3. WRITE TEMPORARY GMS FILE
+# 1. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
-# 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
+# 2. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 if [ -f "$VANILLA_MK" ]; then
     mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
@@ -91,14 +70,14 @@ else
     exit 1
 fi
 
-# 5. CLEANUP AND LUNCH
+# 3. CLEANUP AND LUNCH
 echo "Running make installclean..."
 make installclean
 
 echo "Lunching target: $LUNCH_TARGET (GMS Core Enabled)"
 lunch "$LUNCH_TARGET"
 
-# 6. PAUSE AND INSTRUCTIONS
+# 4. PAUSE AND INSTRUCTIONS
 echo "=========================================================="
 echo "✅ BUILD SETUP COMPLETE. GMS CORE CONFIGURATION IS NOW ACTIVE."
 echo "=========================================================="
