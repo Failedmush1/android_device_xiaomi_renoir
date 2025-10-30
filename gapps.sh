@@ -26,6 +26,9 @@ GMS_CONFIG=$(cat <<EOF
 # FINAL FIX: Only include the GApps product file (MindTheGapps standard path).
 \$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
 
+# CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
+PRODUCT_SOONG_NAMESPACES += vendor/gapps
+
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
