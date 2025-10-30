@@ -3,7 +3,7 @@
 # --- Build Configuration ---
 
 # Fix the fatal lunch target syntax error.
-LUNCH_TARGET=lineage_renoir-userdebug 
+LUNCH_TARGET=lineage_renoir-user
 
 # Set the number of threads for the build (for the user's manual step)
 THREADS=$(nproc --all)
@@ -27,19 +27,14 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# Gms CORE Flags
 WITH_GMS := true
-TARGET_CORE_GMS := true
-TARGET_CORE_GMS_EXTRAS := false
-
-# Ship Pixel Launcher
+TARGET_USES_CORE_GAPPS := true
+WITH_BCR := true
+TARGET_OPTIMIZED_DEXOPT := true
 TARGET_DEFAULT_PIXEL_LAUNCHER := false
 
 # disable/enable blur support, default is false
 TARGET_ENABLE_BLUR := false
-
-RisingChipset="Snapdragon 780G" \\
-RisingMaintainer="Failedmush"
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
