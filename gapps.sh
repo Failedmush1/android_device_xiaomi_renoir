@@ -31,8 +31,8 @@ WITH_GMS := true
 TARGET_CORE_GMS := true
 TARGET_CORE_GMS_EXTRAS := false
 
-# FINAL CRITICAL FIX: Using the discovered path to the GApps main config file.
-\$(call inherit-product-if-exists, vendor/gapps/build/main.mk)
+# FINAL FIX: Bypassing the main.mk conflict by pointing to the standard package list.
+\$(call inherit-product-if-exists, vendor/gapps/build/gapps-packages.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
