@@ -7,13 +7,14 @@ GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
 # 2. CRITICAL FIX: Set LUNCH_TARGET to the correct crDroid format: crdroid_<codename>-<variant>
-LUNCH_TARGET=lineage_renoir-user 
+LUNCH_TARGET= brunch renoir user 
 
 # Set the number of threads for the build
 THREADS=$(nproc --all)
 
 # Define the paths for clarity
 DEVICE_PATH="device/xiaomi/renoir"
+# CRITICAL FIX: Target the file specified in the error message, NOT crdroid_renoir.mk.
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
@@ -23,21 +24,23 @@ GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# CRITICAL FIX: Inherit the common crDroid product config instead of Lineage
+# CRITICAL FIX: Inherit the common lineage product config instead of Lineage
 \$(call inherit-product, vendor/lineage/config/common.mk) 
 
 -include vendor/lineage-priv/keys/keys.mk
 
 # Gms CORE Flags
 WITH_GMS := true
+TARGET_CORE_GMS := true
+TARGET_CORE_GMS_EXTRAS := false
 
-# CRITICAL FIX: This line activates the packages from the 'vendor/gapps' folder.
+# CRITICAL: This line activates the packages from the 'vendor/gapps' folder.
 \$(call inherit-product, vendor/gapps/build/gapps-packages.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
-PRODUCT_MODEL := M2101K9R
+PRODUCT_MODEL := M2101K9Red
 PRODUCT_NAME := lineage_renoir
 
 PRODUCT_BUILD_PROP_OVERRIDES += \\
@@ -71,7 +74,6 @@ echo "Setting up build environment..."
 source build/envsetup.sh
 
 # 2. CRITICAL FIX: Re-source envsetup.sh to recognize the newly cloned vendor/gapps folder
-#    This helps resolve the 'gapps-packages.mk does not exist' error.
 echo "Re-sourcing envsetup.sh to register new vendor files."
 source build/envsetup.sh
 
@@ -80,13 +82,16 @@ echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
 # 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
-# Check if the LineageOS MK file exists before moving it
+# Check if the intended product file exists before moving it
 if [ -f "$VANILLA_MK" ]; then
+    # We remove the original file, as it contains the line that causes the initial error
+    # and replace it with our corrected file.
     mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
     mv "$TEMP_GMS_MK" "$VANILLA_MK"
 else
-    echo "WARNING: Original file $VANILLA_MK not found. Creating it with GMS configuration."
-    mv "$TEMP_GMS_MK" "$VANILLA_MK"
+    echo "ERROR: The main product file $VANILLA_MK was not found."
+    echo "Please check the name of the primary product file in your device tree and update the VANILLA_MK variable in this script."
+    exit 1
 fi
 
 # 5. CLEANUP AND LUNCH
