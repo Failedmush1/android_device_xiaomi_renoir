@@ -6,14 +6,14 @@
 GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
-LUNCH_TARGET=lineage_renoir 
+# 2. PRODUCT_NAME for the build.
+PRODUCT_NAME=lineage_renoir 
 DEVICE_PATH="device/xiaomi/renoir"
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
-TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
+TEMP_GMS_MK="/tmp/temp_gms.mk"
 
 
-# --- GMS Core Configuration (Minimalist Approach) ---
+# --- GMS Core Configuration (Minimalist Approach - MindTheGapps) ---
 GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
@@ -23,7 +23,7 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# FINAL FIX: Only include the GApps product file.
+# FINAL FIX: Only include the GApps product file (MindTheGapps standard path).
 \$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
 
 PRODUCT_BRAND := Xiaomi
@@ -53,14 +53,20 @@ fi
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 2. CRITICAL CHANGE: LUNCH FIRST (before GApps swap) to avoid the 'trunk_staging' crash.
-echo "Lunching target: $LUNCH_TARGET (Initial environment setup)"
-lunch "$LUNCH_TARGET"
+# 2. CRITICAL FIX: MANUALLY EXPORTING VARIABLES TO SKIP THE CRASHING 'LUNCH' COMMAND
+# This replaces the entire lunch command logic.
+echo "Manually exporting build variables (Skipping 'lunch' to avoid Soong crash)..."
+export TARGET_PRODUCT="$PRODUCT_NAME"
+export TARGET_BUILD_VARIANT="user"
 
-# 3. WRITE TEMPORARY GMS FILE
+# 3. RUN CLEANUP (ensures a fresh start)
+echo "Running make installclean..."
+make installclean
+
+# 4. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 
-# 4. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
+# 5. TEMPORARILY REPLACE THE VANILLA MK WITH THE GMS MK
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 if [ -f "$VANILLA_MK" ]; then
     mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
@@ -70,11 +76,11 @@ else
     exit 1
 fi
 
-# 5. INSTRUCTIONS
+# 6. INSTRUCTIONS
 echo "=========================================================="
-echo "✅ BUILD SETUP COMPLETE."
+echo "✅ ENVIRONMENT SETUP COMPLETE (Manual Bypass)."
 echo "=========================================================="
-echo "The build environment is now loaded, and the GApps configuration is active."
+echo "The GApps configuration is active and the environment variables are set."
 echo "To start the build, run this command manually:"
 echo ""
 echo "    make -j\$(nproc --all)"
