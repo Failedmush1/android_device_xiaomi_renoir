@@ -24,7 +24,7 @@ GMS_CONFIG=$(cat <<EOF
 -include vendor/lineage-priv/keys/keys.mk
 
 # CRITICAL FINAL FIX: Using the highly probable correct MindTheGapps inclusion file path.
-\$(call inherit-product-if-exists, vendor/gapps/common/common.mk)
+\$(call inherit-product-if-exists, vendor/gapps/common/common-vendor.mk)
 
 # CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
 PRODUCT_SOONG_NAMESPACES += vendor/gapps
