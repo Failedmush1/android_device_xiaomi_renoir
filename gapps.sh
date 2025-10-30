@@ -7,7 +7,7 @@ GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
 # 2. CRITICAL FIX: Set LUNCH_TARGET to the correct crDroid format: crdroid_<codename>-<variant>
-LUNCH_TARGET=crdroid_renoir-user 
+LUNCH_TARGET=lineage_renoir-user 
 
 # Set the number of threads for the build
 THREADS=$(nproc --all)
@@ -24,7 +24,7 @@ GMS_CONFIG=$(cat <<EOF
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
 # CRITICAL FIX: Inherit the common crDroid product config instead of Lineage
-\$(call inherit-product, vendor/crDroid/config/common.mk) 
+\$(call inherit-product, vendor/lineage/config/common.mk) 
 
 -include vendor/lineage-priv/keys/keys.mk
 
@@ -38,8 +38,7 @@ PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := M2101K9R
-# CRITICAL FIX: Change PRODUCT_NAME to the crDroid format
-PRODUCT_NAME := crdroid_renoir
+PRODUCT_NAME := lineage_renoir
 
 PRODUCT_BUILD_PROP_OVERRIDES += \\
     BuildDesc="renoir_global-user 13 TKQ1.220829.002 V14.0.7.0.TKIMIXM release-keys" \\
