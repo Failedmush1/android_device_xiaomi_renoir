@@ -23,8 +23,8 @@ GMS_CONFIG=$(cat <<EOF
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# FINAL FIX: Only include the GApps product file (MindTheGapps standard path).
-\$(call inherit-product-if-exists, vendor/gapps/product/gapps.mk)
+# CRITICAL FINAL FIX: Using the highly probable correct MindTheGapps inclusion file path.
+\$(call inherit-product-if-exists, vendor/gapps/common/common.mk)
 
 # CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
 PRODUCT_SOONG_NAMESPACES += vendor/gapps
@@ -57,7 +57,6 @@ echo "Setting up build environment..."
 source build/envsetup.sh
 
 # 2. CRITICAL FIX: MANUALLY EXPORTING VARIABLES TO SKIP THE CRASHING 'LUNCH' COMMAND
-# This replaces the entire lunch command logic.
 echo "Manually exporting build variables (Skipping 'lunch' to avoid Soong crash)..."
 export TARGET_PRODUCT="$PRODUCT_NAME"
 export TARGET_BUILD_VARIANT="user"
