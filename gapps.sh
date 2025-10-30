@@ -6,15 +6,12 @@
 GAPPS_URL="https://gitlab.com/axionaosp/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. CRITICAL FIX: Set LUNCH_TARGET to the correct crDroid format: crdroid_<codename>-<variant>
-LUNCH_TARGET= brunch renoir user 
-
-# Set the number of threads for the build
-THREADS=$(nproc --all)
+# 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
+LUNCH_TARGET=lineage_renoir-user 
 
 # Define the paths for clarity
 DEVICE_PATH="device/xiaomi/renoir"
-# CRITICAL FIX: Target the file specified in the error message, NOT crdroid_renoir.mk.
+# TARGETING THE PRODUCT MK FILE: lineage_renoir.mk
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="$DEVICE_PATH/temp_gms.mk"
 
@@ -24,7 +21,7 @@ GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# CRITICAL FIX: Inherit the common lineage product config instead of Lineage
+# Inherit the common LineageOS product config (AS REQUIRED BY YOUR BUILD SETUP)
 \$(call inherit-product, vendor/lineage/config/common.mk) 
 
 -include vendor/lineage-priv/keys/keys.mk
@@ -34,13 +31,14 @@ WITH_GMS := true
 TARGET_CORE_GMS := true
 TARGET_CORE_GMS_EXTRAS := false
 
-# CRITICAL: This line activates the packages from the 'vendor/gapps' folder.
-\$(call inherit-product, vendor/gapps/build/gapps-packages.mk)
+# CRITICAL FIX: Changed path to vendor/gapps/common.mk based on your repository structure.
+\$(call inherit-product-if-exists, vendor/gapps/common.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
-PRODUCT_MODEL := M2101K9Red
+PRODUCT_MODEL := M2101K9R
+# PRODUCT_NAME must be lineage_renoir for the lunch command to succeed.
 PRODUCT_NAME := lineage_renoir
 
 PRODUCT_BUILD_PROP_OVERRIDES += \\
@@ -55,7 +53,7 @@ EOF
 
 # --- Setup Execution ---
 
-# 1. CLONE GAPPS REPO IF IT DOESN'T EXIST
+# 1. CLONE GAPPS REPO IF IT DOESN'T EXIST (Skipping this will be faster if it's already there)
 if [ ! -d "vendor/gapps" ]; then
     echo "GApps vendor directory not found. Cloning vendor/gapps..."
     git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
@@ -73,7 +71,7 @@ fi
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 2. CRITICAL FIX: Re-source envsetup.sh to recognize the newly cloned vendor/gapps folder
+# 2. CRITICAL FIX: Re-source envsetup.sh to register new vendor files.
 echo "Re-sourcing envsetup.sh to register new vendor files."
 source build/envsetup.sh
 
@@ -84,13 +82,10 @@ echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
 echo "Swapping $VANILLA_MK with temporary GMS configuration."
 # Check if the intended product file exists before moving it
 if [ -f "$VANILLA_MK" ]; then
-    # We remove the original file, as it contains the line that causes the initial error
-    # and replace it with our corrected file.
     mv "$VANILLA_MK" "$VANILLA_MK.vanilla_backup"
     mv "$TEMP_GMS_MK" "$VANILLA_MK"
 else
-    echo "ERROR: The main product file $VANILLA_MK was not found."
-    echo "Please check the name of the primary product file in your device tree and update the VANILLA_MK variable in this script."
+    echo "ERROR: The main product file $VANILLA_MK was not found. Please verify the filename and try again."
     exit 1
 fi
 
@@ -107,7 +102,7 @@ echo "✅ BUILD SETUP COMPLETE. GMS CORE CONFIGURATION IS NOW ACTIVE."
 echo "=========================================================="
 echo "To start the build, run this command manually:"
 echo ""
-echo "    make -j$(nproc --all)"
+echo "    make -j\$(nproc --all)"
 echo ""
 echo "To clean up and restore your Vanilla configuration, run this command:"
 echo ""
