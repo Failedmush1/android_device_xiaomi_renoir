@@ -6,8 +6,8 @@
 GAPPS_URL="https://gitlab.com/MindTheGapps/vendor_gapps"
 GAPPS_BRANCH="baklava"
 
-# 2. LUNCH_TARGET and PRODUCT_NAME are set to the exact name your tree requires.
-LUNCH_TARGET=lineage_renoir 
+# 2. PRODUCT_NAME for the build.
+PRODUCT_NAME=lineage_renoir 
 DEVICE_PATH="device/xiaomi/renoir"
 VANILLA_MK="$DEVICE_PATH/lineage_renoir.mk"
 TEMP_GMS_MK="/tmp/temp_gms.mk"
@@ -18,28 +18,27 @@ GMS_CONFIG=$(cat <<EOF
 # Inherit from renoir device
 \$(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit the common LineageOS product config (AS REQUIRED BY YOUR BUILD SETUP)
-\$(call inherit-product, vendor/lineage/config/common.mk) 
+# Inherit the common LineageOS product config
+\$(call inherit-product, vendor/lineage/config/common.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# FINAL CRITICAL FIX: Using the verified architecture-specific inclusion file path.
+# GMS Flags for Core Integration (Necessary to trigger GMS inclusion)
+WITH_GMS := true
+TARGET_CORE_GMS := true
+TARGET_CORE_GMS_EXTRAS := false
+
+# CRITICAL FINAL FIX: Using the verified architecture-specific MindTheGapps path
 \$(call inherit-product-if-exists, vendor/gapps/arm64/arm64-vendor.mk)
 
-# CRITICAL SOONG FIX: Manually inject the GApps directory into Soong's module search path.
 PRODUCT_SOONG_NAMESPACES += vendor/gapps
 
+# Core Product Identity Definitions (Required by the build system)
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := M2101K9R
 PRODUCT_NAME := lineage_renoir
-
-PRODUCT_BUILD_PROP_OVERRIDES += \\
-    BuildDesc="renoir_global-user 13 TKQ1.220829.002 V14.0.7.0.TKIMIXM release-keys" \\
-    BuildFingerprint=Xiaomi/renoir_global/renoir:13/TKQ1.220829.002/V14.0.7.0.TKIMIXM:user/release-keys \\
-    DeviceProduct=renoir \\
-    SystemName=renoir_global
 
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 EOF
@@ -47,7 +46,12 @@ EOF
 
 # --- Setup Execution ---
 
-# 1. CLONE GAPPS REPO (Safeguard in case it was deleted)
+# 1. CLEANUP PREVIOUS RUN (Ensures a clean state)
+echo "--- Performing Critical Cleanup ---"
+mv "$VANILLA_MK.vanilla_backup" "$VANILLA_MK" 2>/dev/null
+make clean
+
+# 2. CLONE GAPPS REPO (Safeguard in case it was deleted)
 if [! -d "vendor/gapps" ]; then
     echo "GApps vendor directory not found. Cloning MindTheGapps..."
     git clone "$GAPPS_URL" vendor/gapps -b "$GAPPS_BRANCH"
@@ -56,14 +60,10 @@ fi
 echo "Setting up build environment..."
 source build/envsetup.sh
 
-# 2. CRITICAL FIX: MANUALLY EXPORTING VARIABLES TO SKIP THE CRASHING 'LUNCH' COMMAND
+# 3. CRITICAL FIX: MANUALLY EXPORTING VARIABLES TO SKIP THE CRASHING 'LUNCH' COMMAND
 echo "Manually exporting build variables (Skipping 'lunch' to avoid Soong crash)..."
 export TARGET_PRODUCT="$PRODUCT_NAME"
 export TARGET_BUILD_VARIANT="user"
-
-# 3. RUN CLEANUP (ensures a fresh start)
-echo "Running make installclean..."
-make installclean
 
 # 4. WRITE TEMPORARY GMS FILE
 echo "$GMS_CONFIG" > "$TEMP_GMS_MK"
@@ -78,16 +78,18 @@ else
     exit 1
 fi
 
-# 6. INSTRUCTIONS
+# 6. START BUILD
 echo "=========================================================="
-echo "✅ ENVIRONMENT SETUP COMPLETE (Manual Bypass)."
+echo "✅ ENVIRONMENT SETUP COMPLETE. STARTING FINAL BUILD."
 echo "=========================================================="
-echo "The GApps configuration is active and the environment variables are set."
-echo "To start the build, run this command manually:"
-echo ""
-echo "    make -j\$(nproc --all)"
-echo ""
-echo "To clean up and restore your Vanilla configuration, run this command:"
-echo ""
-echo "    mv \"$VANILLA_MK.vanilla_backup\" \"$VANILLA_MK\" 2>/dev/null"
+
+make -j$(nproc --all)
+
+# 7. CLEANUP AFTER BUILD (CRITICAL)
 echo "=========================================================="
+echo "BUILD FINISHED. RESTORING VANILLA CONFIGURATION."
+echo "=========================================================="
+
+mv "$VANILLA_MK.vanilla_backup" "$VANILLA_MK" 2>/dev/null
+
+echo "Cleanup complete. Source tree is ready for the next build."
