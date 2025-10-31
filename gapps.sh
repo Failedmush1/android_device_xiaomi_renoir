@@ -83,7 +83,7 @@ echo "=========================================================="
 echo "✅ ENVIRONMENT SETUP COMPLETE. STARTING FINAL BUILD."
 echo "=========================================================="
 
-make -j$(nproc --all)
+mka bacon
 
 # 7. CLEANUP AFTER BUILD (CRITICAL)
 echo "=========================================================="
