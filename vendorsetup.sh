@@ -10,7 +10,7 @@ echo "Gapps support enabled."
 
 echo "Cloning gapps source from crdroid gitlab..."
 
-git clone --depth=1 https://gitlab.com/MindTheGapps/vendor_gapps -b tau vendor/gapps
+git clone --depth=1 https://gitlab.com/crdroidandroid/android-vendor-gapps-spes.git -b 13.0 vendor/gapps
 
 else
 
