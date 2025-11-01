@@ -16,7 +16,7 @@ TARGET_SUPPORTS_GOOGLE_RECORDER := false
 TARGET_SUPPORTS_QUICK_TAP := false
 TARGET_SUPPORTS_CALL_RECORDING := false
 TARGET_ENABLE_BLUR := true
-WITH_GAPPS :=false
+WITH_GAPPS := true
 
 -include vendor/lineage-priv/keys/keys.mk
 
