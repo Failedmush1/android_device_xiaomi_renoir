@@ -7,13 +7,16 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff.
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+# Inherit some common Spark stuff.
+$(call inherit-product, vendor/spark/config/common_full_phone.mk)
 
-# Additions
-$(call inherit-product-if-exists, vendor/gapps/common.mk)
-$(call inherit-product-if-exists, vendor/prebuilt-apps/config.mk)
-
+# Spark Stuffs
+TARGET_BOOT_ANIMATION_RES := 1080
+TARGET_SUPPORTS_GOOGLE_RECORDER := false
+TARGET_SUPPORTS_QUICK_TAP := false
+TARGET_SUPPORTS_CALL_RECORDING := false
+TARGET_ENABLE_BLUR := true
+WITH_GAPPS :=false
 -include vendor/lineage-priv/keys/keys.mk
 
 
