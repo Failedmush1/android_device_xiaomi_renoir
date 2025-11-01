@@ -5,4 +5,9 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/lineage_renoir.mk
+    $(LOCAL_DIR)/spark_renoir.mk
+
+COMMON_LUNCH_CHOICES := \
+    spark_renoir-user \
+    spark_renoir-userdebug \
+    spark_renoir-eng
