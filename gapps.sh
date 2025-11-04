@@ -58,5 +58,5 @@ check_error "Failed to clean build artifacts."
 source build/envsetup.sh
 check_error "Failed to source build/envsetup.sh."
 
-brunch "${DEVICE_CODENAME}" user
+brunch "renoir" user
 check_error "Build failed."
