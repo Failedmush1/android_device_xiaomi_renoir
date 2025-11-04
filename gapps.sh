@@ -50,7 +50,6 @@ if [ -f "$BOARD_CONFIG_MK" ]; then
     if ! grep -q "BUILD_BROKEN_DUP_RULES" "$BOARD_CONFIG_MK"; then
         echo "BUILD_BROKEN_DUP_RULES := true" >> "$BOARD_CONFIG_MK"
     fi
-    # FIX ADDED HERE: Bypass missing required hardware modules
     if ! grep -q "BUILD_BROKEN_MISSING_REQUIRED_MODULES" "$BOARD_CONFIG_MK"; then
         echo "BUILD_BROKEN_MISSING_REQUIRED_MODULES := true" >> "$BOARD_CONFIG_MK"
     fi
