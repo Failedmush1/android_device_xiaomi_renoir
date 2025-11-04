@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# --- 1. Define Variables ---
 DEVICE_CODENAME="renoir"
 MANUFACTURER="xiaomi"
 BUILD_TARGET="lineage_${DEVICE_CODENAME}-user"
@@ -12,9 +11,8 @@ DEVICE_DIR="device/${MANUFACTURER}/${DEVICE_CODENAME}"
 DEVICE_MK="${DEVICE_DIR}/device.mk"
 BOARD_CONFIG_MK="${DEVICE_DIR}/BoardConfig.mk"
 PRODUCT_MK="${DEVICE_DIR}/lineage_${DEVICE_CODENAME}.mk" 
-GMS_MAKEFILE="vendor/gms/gms_pico.mk" # <-- Now using Pico GMS (AOSP Keyboard Included)
+GMS_MAKEFILE="vendor/gms/gms_pico.mk" 
 
-# Function to check for errors and exit
 check_error() {
     if [ $? -ne 0 ]; then
         echo "❌ ERROR: $1"
@@ -22,10 +20,6 @@ check_error() {
     }
 }
 
-echo "✨ Starting Ultra-Minimal GMS Pico Build for A16 (${BUILD_TARGET})..."
-
-# --- 2. GApps Manifest Setup ---
-echo "--- Setting up GApps Manifest ---"
 rm -f .repo/local_manifests/gapps.xml
 
 mkdir -p .repo/local_manifests
@@ -38,10 +32,6 @@ cat > .repo/local_manifests/gapps.xml << EOF
 EOF
 check_error "Failed to create gapps.xml manifest."
 
-# --- 3. Device Tree Patching ---
-echo "--- Applying necessary configuration patches ---"
-
-# 3a. Patch device.mk for GApps inclusion
 if [ -f "$DEVICE_MK" ]; then
     sed -i '/vendor\/gapps\/arm64\/arm64-vendor.mk/d' "$DEVICE_MK"
     sed -i '/vendor\/gms\//d' "$DEVICE_MK"
@@ -52,7 +42,6 @@ if [ -f "$DEVICE_MK" ]; then
     fi
 fi
 
-# 3b. Patch BoardConfig.mk (REQUIRED for GApps compatibility)
 if [ -f "$BOARD_CONFIG_MK" ]; then
     if ! grep -q "BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES" "$BOARD_CONFIG_MK"; then
         echo "" >> "$BOARD_CONFIG_MK"
@@ -63,25 +52,11 @@ if [ -f "$BOARD_CONFIG_MK" ]; then
     fi
 fi
 
-# 3c. Automated cleanup: REMOVED per user request.
-
-# 3d. Patch GSI file: REMOVED per user request (Must use manual fix).
-
-# --- 4. Sync Source: REMOVED per user request.
-
-# --- 5. Build Execution ---
-echo "--- Cleaning old build artifacts (make clean) ---"
 make clean
 check_error "Failed to clean build artifacts."
 
-# CRITICAL FIXES: Physical deletion of conflicting source folders: REMOVED per user request.
-
-echo "--- Sourcing build environment (build/envsetup.sh) ---"
 source build/envsetup.sh
 check_error "Failed to source build/envsetup.sh."
 
-echo "--- Starting Build Process using brunch ${DEVICE_CODENAME} user ---"
 brunch "${DEVICE_CODENAME}" user
 check_error "Build failed."
-
-echo "✅ BUILD COMPLETE! (Will include AOSP Keyboard by default)"
