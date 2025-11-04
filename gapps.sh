@@ -17,7 +17,7 @@ check_error() {
     if [ $? -ne 0 ]; then
         echo "❌ ERROR: $1"
         exit 1
-    }
+    fi
 }
 
 rm -f .repo/local_manifests/gapps.xml
@@ -52,11 +52,13 @@ if [ -f "$BOARD_CONFIG_MK" ]; then
     fi
 fi
 
-make clean
-check_error "Failed to clean build artifacts."
-
+# Source environment must run before any build commands
 source build/envsetup.sh
 check_error "Failed to source build/envsetup.sh."
 
-brunch "renoir" user
+make clean
+check_error "Failed to clean build artifacts."
+
+# CHANGE APPLIED HERE: Using direct string "renoir"
+brunch renoir user
 check_error "Build failed."
