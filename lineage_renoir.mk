@@ -10,9 +10,6 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
-# Additions
-$(call inherit-product, vendor/gapps/arm64/arm64-vendor.mk)
-
 -include vendor/lineage-priv/keys/keys.mk
 
 PRODUCT_BRAND := Xiaomi
