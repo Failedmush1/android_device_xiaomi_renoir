@@ -42,15 +42,6 @@ if [ -f "$DEVICE_MK" ]; then
     fi
 fi
 
-# FIX: Add vendor/gms to PRODUCT_SOONG_NAMESPACES in the product makefile
-if [ -f "$PRODUCT_MK" ]; then
-    if ! grep -q "PRODUCT_SOONG_NAMESPACES.*vendor/gms" "$PRODUCT_MK"; then
-        echo "" >> "$PRODUCT_MK"
-        echo "# GMS Soong Namespace Fix" >> "$PRODUCT_MK"
-        echo "PRODUCT_SOONG_NAMESPACES += vendor/gms" >> "$PRODUCT_MK"
-    fi
-fi
-
 if [ -f "$BOARD_CONFIG_MK" ]; then
     if ! grep -q "BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES" "$BOARD_CONFIG_MK"; then
         echo "" >> "$BOARD_CONFIG_MK"
@@ -59,8 +50,13 @@ if [ -f "$BOARD_CONFIG_MK" ]; then
     if ! grep -q "BUILD_BROKEN_DUP_RULES" "$BOARD_CONFIG_MK"; then
         echo "BUILD_BROKEN_DUP_RULES := true" >> "$BOARD_CONFIG_MK"
     fi
+    # FIX ADDED HERE: Bypass missing required hardware modules
+    if ! grep -q "BUILD_BROKEN_MISSING_REQUIRED_MODULES" "$BOARD_CONFIG_MK"; then
+        echo "BUILD_BROKEN_MISSING_REQUIRED_MODULES := true" >> "$BOARD_CONFIG_MK"
+    fi
 fi
 
+# Initialize environment before using 'make'
 source build/envsetup.sh
 check_error "Failed to source build/envsetup.sh."
 
