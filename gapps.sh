@@ -1,66 +1,93 @@
 #!/bin/bash
+#
+# GApps Integration Script for Xiaomi renoir (sm8350 platform)
+# This script prepares the build environment for GApps inclusion by:
+# 1. Cloning or syncing the GMS vendor sources (from EvolutionX) into vendor/gms.
+# 2. Injecting 'vendor/gms' into the PRODUCT_SOONG_NAMESPACES list in device.mk.
 
+# --- Configuration Variables from User Input ---
 DEVICE_CODENAME="renoir"
 MANUFACTURER="xiaomi"
-BUILD_TARGET="lineage_${DEVICE_CODENAME}-user"
-GA_REVISION="bka" 
 GA_REMOTE="EvolutionX"
 GA_FETCH_URL="https://git.evolution-x.org/Evolution-X/"
 GA_PROJECT_NAME="vendor_gms"
-DEVICE_DIR="device/${MANUFACTURER}/${DEVICE_CODENAME}"
-DEVICE_MK="${DEVICE_DIR}/device.mk"
-BOARD_CONFIG_MK="${DEVICE_DIR}/BoardConfig.mk"
-PRODUCT_MK="${DEVICE_DIR}/lineage_${DEVICE_CODENAME}.mk" 
-GMS_MAKEFILE="vendor/gms/gms_pico.mk" 
 
-check_error() {
-    if [ $? -ne 0 ]; then
-        echo "❌ ERROR: $1"
+# --- Calculated Paths ---
+GMS_DIR="vendor/gms"
+CONFIG_FILE="device/${MANUFACTURER}/${DEVICE_CODENAME}/device.mk"
+GMS_NAMESPACE="vendor/gms"
+
+# --- Construct the final Git URL ---
+GMS_REPO_URL="${GA_FETCH_URL}${GA_PROJECT_NAME}"
+
+echo "==============================================="
+echo "Starting GMS Integration Setup"
+echo "Target Config File: ${CONFIG_FILE}"
+echo "GMS Repository: ${GMS_REPO_URL}"
+echo "==============================================="
+
+# 1. Clone/Sync GMS vendor sources
+echo "1. Preparing GMS vendor sources in ${GMS_DIR}..."
+
+if [ -d "$GMS_DIR" ]; then
+    echo "Directory ${GMS_DIR} exists. Attempting 'repo sync' for updates..."
+    
+    # Run repo sync only on this directory. This is the standard way to update.
+    # We use -j$(nproc --all) for parallel syncing, matching the build environment practice.
+    repo sync -j$(nproc --all) "$GMS_DIR"
+    
+    if [ $? -eq 0 ]; then
+        echo "Successfully synced GMS repository."
+    else
+        echo "WARNING: 'repo sync vendor/gms' failed."
+        echo "If this directory was cloned manually (not via a local manifest), sync will fail."
+    fi
+else
+    # If the directory doesn't exist, we perform a direct git clone for the initial setup.
+    echo "Directory ${GMS_DIR} missing. Performing initial 'git clone' from ${GA_REMOTE}..."
+    git clone --depth=1 "$GMS_REPO_URL" "$GMS_DIR"
+    
+    if [ $? -eq 0 ]; then
+        echo "Successfully performed initial clone."
+    else
+        echo "ERROR: Git clone failed. Check the URL and ensure the repository exists."
         exit 1
     fi
-}
+fi
+echo ""
 
-rm -f .repo/local_manifests/gapps.xml
+# 2. Inject vendor/gms into PRODUCT_SOONG_NAMESPACES in device.mk
+echo "2. Injecting 'vendor/gms' into PRODUCT_SOONG_NAMESPACES..."
 
-mkdir -p .repo/local_manifests
-cat > .repo/local_manifests/gapps.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-  <remote name="${GA_REMOTE}" fetch="${GA_FETCH_URL}" />
-  <project path="vendor/gms" name="${GA_PROJECT_NAME}" remote="${GA_REMOTE}" revision="${GA_REVISION}" />
-</manifest>
-EOF
-check_error "Failed to create gapps.xml manifest."
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Configuration file ${CONFIG_FILE} not found. Aborting namespace injection."
+    exit 1
+fi
 
-if [ -f "$DEVICE_MK" ]; then
-    sed -i '/vendor\/gapps\/arm64\/arm64-vendor.mk/d' "$DEVICE_MK"
-    sed -i '/vendor\/gms\//d' "$DEVICE_MK"
+# Check if vendor/gms is already present to prevent duplicates
+if grep -q "vendor/gms" "$CONFIG_FILE"; then
+    echo "Namespace 'vendor/gms' already found in ${CONFIG_FILE}. Skipping injection."
+else
+    # sed command to find the PRODUCT_SOONG_NAMESPACES += \ line and append the GMS path immediately after it.
+    sed -i "/^PRODUCT_SOONG_NAMESPACES/ a\\	${GMS_NAMESPACE} \\\\" "$CONFIG_FILE"
     
-    if ! grep -q "$GMS_MAKEFILE" "$DEVICE_MK"; then
-        echo "" >> "$DEVICE_MK"
-        echo "include $GMS_MAKEFILE" >> "$DEVICE_MK"
+    if [ $? -eq 0 ]; then
+        echo "Successfully injected ${GMS_NAMESPACE} into ${CONFIG_FILE}."
+    else
+        echo "ERROR: sed command failed. Please check ${CONFIG_FILE} manually."
+        exit 1
     fi
 fi
+echo ""
 
-if [ -f "$BOARD_CONFIG_MK" ]; then
-    if ! grep -q "BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES" "$BOARD_CONFIG_MK"; then
-        echo "" >> "$BOARD_CONFIG_MK"
-        echo "BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true" >> "$BOARD_CONFIG_MK"
-    fi
-    if ! grep -q "BUILD_BROKEN_DUP_RULES" "$BOARD_CONFIG_MK"; then
-        echo "BUILD_BROKEN_DUP_RULES := true" >> "$BOARD_CONFIG_MK"
-    fi
-    if ! grep -q "BUILD_BROKEN_MISSING_REQUIRED_MODULES" "$BOARD_CONFIG_MK"; then
-        echo "BUILD_BROKEN_MISSING_REQUIRED_MODULES := true" >> "$BOARD_CONFIG_MK"
-    fi
-fi
-
-# Initialize environment before using 'make'
-source build/envsetup.sh
-check_error "Failed to source build/envsetup.sh."
-
-make clean
-check_error "Failed to clean build artifacts."
-
-brunch renoir user
-check_error "Build failed."
+# 3. Final instruction
+echo "==============================================="
+echo "GMS Setup Complete. Configuration updated."
+echo "==============================================="
+echo "NEXT STEPS:"
+echo "1. Export WITH_GMS=true."
+echo "2. Clean and restart the build to apply the permanent configuration change."
+echo ""
+echo "   export WITH_GMS=true"
+echo "   make clean"
+echo "   brunch renoir user"
