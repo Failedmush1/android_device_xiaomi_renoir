@@ -4,6 +4,7 @@
 # This script prepares the build environment for GApps inclusion by:
 # 1. Cloning or syncing the GMS vendor sources (from EvolutionX) into vendor/gms.
 # 2. Injecting 'vendor/gms' into the PRODUCT_SOONG_NAMESPACES list in device.mk.
+# 3. AUTOMATICALLY ADDING the Pixel Launcher exclusion to device.mk.
 
 # --- Configuration Variables from User Input ---
 DEVICE_CODENAME="renoir"
@@ -80,7 +81,32 @@ else
 fi
 echo ""
 
-# 3. Final instruction
+# 3. Automatically add Pixel Launcher exclusion (NexusLauncher / Quickstep)
+echo "3. Auto-excluding Pixel Launcher (NexusLauncher/Quickstep)..."
+
+# Check if the exclusion lines are already present
+if grep -q "PRODUCT_PACKAGE_EXCLUDE_LIST.*NexusLauncher" "$CONFIG_FILE"; then
+    echo "Exclusion list already found in ${CONFIG_FILE}. Skipping injection."
+else
+    # Append the exclusion list to the end of the config file
+    echo "
+# --- BEGIN AUTO-INJECTED PIXEL LAUNCHER EXCLUSION ---
+PRODUCT_PACKAGE_EXCLUDE_LIST += \\
+    NexusLauncher \\
+    Quickstep \\
+# --- END AUTO-INJECTED PIXEL LAUNCHER EXCLUSION ---
+" >> "$CONFIG_FILE"
+    
+    if [ $? -eq 0 ]; then
+        echo "Successfully added NexusLauncher and Quickstep to the exclusion list."
+    else
+        echo "ERROR: Failed to append exclusion list to ${CONFIG_FILE}."
+        exit 1
+    fi
+fi
+echo ""
+
+# 4. Final instruction
 echo "==============================================="
 echo "GMS Setup Complete. Configuration updated."
 echo "==============================================="
