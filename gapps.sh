@@ -2,6 +2,7 @@
 #
 # GApps Integration Script for Xiaomi renoir
 # Uses AxionAOSP/vendor_gapps repository with specific configuration for 'core' GApps variant.
+# Includes automatic exclusion of Pixel Launcher and common build conflict fixes.
 
 # --- Configuration Variables ---
 DEVICE_CODENAME="renoir"
@@ -9,7 +10,7 @@ MANUFACTURER="xiaomi"
 GA_REMOTE="AxionAOSP"
 GA_FETCH_URL="https://gitlab.com/axionaosp/"
 GA_PROJECT_NAME="vendor_gapps"
-GA_BRANCH="baklava" # Updated to 'baklava' as requested
+GA_BRANCH="baklava" # Set to 'baklava'
 
 # --- Calculated Paths ---
 GMS_DIR="vendor/gms"
@@ -128,10 +129,7 @@ echo ""
 echo "==============================================="
 echo "GMS Setup Complete. Configuration updated."
 echo "==============================================="
-echo "!!! KEY CHECK REQUIRED !!!"
-echo "You MUST ensure your private signing keys are in vendor/lineage-priv/keys/ or the build will fail immediately on the signing step."
-echo ""
-echo "NEXT STEPS:"
-echo "   export WITH_GMS=true"
-echo "   make clean"
-echo "   brunch renoir user"
+echo "NEXT STEPS (Full Rebuild Required):"
+echo "1. Export the GMS flag:   export WITH_GMS=true"
+echo "2. setup build:           . build/envsetup.sh"
+echo "3. Start the build:       brunch renoir user"
