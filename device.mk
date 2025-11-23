@@ -38,6 +38,9 @@ PRODUCT_SOONG_NAMESPACES += \
 # WiFi
 PRODUCT_PACKAGES += \
     TargetWifiOverlay
+# Vibrator
+$(call soong_config_set,qti_vibrator,effect_lib,libqtivibratoreffect.xiaomi)
+$(call soong_config_set_bool,qti_vibrator,use_effect_stream,true)
 
 # Call the proprietary setup
 $(call inherit-product, vendor/xiaomi/renoir/renoir-vendor.mk)
