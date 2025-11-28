@@ -1,4 +1,10 @@
-echo -e "${color}Setup Gapps ${endcolor}"
+#!/bin/bash
+
+# Color definitions (fix variable names)
+color="\u001B[0;32m"
+endcolor="\u001B[0m"
+
+echo -e "${color}Setup Gapps${endcolor}"
 
 read -p "Do you want to build with gapps support? (yes/no): " USER_INPUT
 
@@ -11,21 +17,38 @@ if [[ "$USER_INPUT" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     echo "Cloning MindTheGapps vendor_gapps from GitLab (baklava)..."
     git clone --depth=1 https://gitlab.com/MindTheGapps/vendor_gapps -b baklava vendor/gapps
     
+    # Fix ALL permissions in vendor/gapps
+    echo "Setting executable permissions..."
+    find vendor/gapps -name "*.sh" -exec chmod +x {} ;
+    chmod +x vendor/gapps/setup-makefiles.py 2>/dev/null || true
+    
     # Auto-integrate into device tree
     echo "Integrating GApps into device/xiaomi/renoir..."
     
-    # Add to renoir.mk (Makefile include)
+    # Add to renoir.mk (Makefile include) - check first to avoid duplicates
     if ! grep -q "gapps/arm64/arm64-vendor.mk" device/xiaomi/renoir/renoir.mk; then
-        echo "" >> device/xiaomi/renoir/renoir.mk
-        echo "# MindTheGapps" >> device/xiaomi/renoir/renoir.mk
-        echo "include vendor/gapps/arm64/arm64-vendor.mk" >> device/xiaomi/renoir/renoir.mk
-        echo "✓ Added GApps makefile include"
+        {
+            echo ""
+            echo "# MindTheGapps (baklava)"
+            echo "include vendor/gapps/arm64/arm64-vendor.mk"
+        } >> device/xiaomi/renoir/renoir.mk
+        echo "✓ Added GApps makefile include to renoir.mk"
+    else
+        echo "✓ GApps already included in renoir.mk"
     fi
+    
+    # Fix vendorsetup.sh permissions
+    chmod +x device/xiaomi/renoir/vendorsetup.sh
     
     # Set GMS flag
     export WITH_GMS=true
+    echo "WITH_GMS=true exported"
     
-    echo "✅ GApps setup complete. Use: brunch renoir"
+    echo "✅ GApps setup complete with permissions fixed!"
+    echo "Next steps:"
+    echo "  source build/envsetup.sh"
+    echo "  source device/xiaomi/renoir/vendorsetup.sh" 
+    echo "  brunch renoir user"
     
 else
     echo "Gapps support disabled. Skipping ..."
