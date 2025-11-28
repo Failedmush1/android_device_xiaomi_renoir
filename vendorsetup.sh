@@ -10,7 +10,7 @@ echo "Gapps support enabled."
 
 echo "Cloning gapps source from crdroid gitlab..."
 
-git clone --depth=1 https://gitlab.com/MindTheGapps/vendor_gapps -b bka vendor/gapps
+git clone --depth=1 https://gitlab.com/MindTheGapps/vendor_gapps -b baklava vendor/gapps
 
 else
 
