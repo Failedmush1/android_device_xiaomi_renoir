@@ -1,5 +1,5 @@
 #!/bin/bash
-# crDroid renoir Build Script (SAFE Vanilla + GApps 6GB Resize)
+# crDroid renoir Build Script (EOF FIXED - Safe Vanilla + GApps)
 set -e
 
 echo "🚀 crDroid renoir Build Script (Xiaomi Mi 11 Lite 5G - SM8350)"
@@ -19,30 +19,27 @@ else
 fi
 
 # 1. BACKUP ORIGINALS
-[ -f device/xiaomi/renoir/BoardConfig.mk.bak ] || cp device/xiaomi/renoir/BoardConfig.mk device/xiaomi/renoir/BoardConfig.mk.bak
-[ -f device/xiaomi/renoir/lineage_renoir.mk.bak ] || cp device/xiaomi/renoir/lineage_renoir.mk device/xiaomi/renoir/lineage_renoir.mk.bak
+[ -f device/xiaomi/renoir/BoardConfig.mk.bak ] || cp device/xiaomi/renoir/BoardConfig.mk device/xiaomi/renoir/BoardConfig.mk.bak 2>/dev/null || true
+[ -f device/xiaomi/renoir/lineage_renoir.mk.bak ] || cp device/xiaomi/renoir/lineage_renoir.mk device/xiaomi/renoir/lineage_renoir.mk.bak 2>/dev/null || true
 
 # 2. GAPPS SETUP (if selected)
 if [ $GAPPS -eq 1 ]; then
     rm -rf vendor/gapps
     git clone --depth=1 https://gitlab.com/MindTheGapps/vendor_gapps -b tau vendor/gapps
-    echo "✅ GApps cloned (MindTheGapps)"
+    echo "✅ GApps cloned"
     
-    # Soong namespace
     grep -q "vendor/gapps" vendor/lineage/config/crdroid.mk 2>/dev/null || \
     echo "PRODUCT_SOONG_NAMESPACES += vendor/gapps" >> vendor/lineage/config/crdroid.mk
     
-    # GApps makefiles (clean slate)
-    sed -i '/vendor/gapps/d' device/xiaomi/renoir/lineage_renoir.mk 2>/dev/null
+    sed -i '/vendor/gapps/d' device/xiaomi/renoir/lineage_renoir.mk 2>/dev/null || true
     cat >> device/xiaomi/renoir/lineage_renoir.mk << 'EOF'
-
 # 🔥 MindTheGapps (Play Store + Core GApps)
 $(call inherit-product-if-exists, vendor/gapps/common/common-vendor.mk)
 $(call inherit-product-if-exists, vendor/gapps/arm64/arm64-vendor.mk)
 EOF
 fi
 
-# 3. 🔥 DUPLICATE FIX (Always safe)
+# 3. DUPLICATE FIX (Always safe)
 mkdir -p device/xiaomi/renoir/BoardConfig
 cat > device/xiaomi/renoir/BoardConfig/override.mk << 'EOF'
 # 🔥 Soong duplicate overrides (libjni_latinimegoogle.so)
@@ -53,16 +50,4 @@ EOF
 
 grep -q "override.mk" device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || \
 echo -e "
-include device/xiaomi/renoir/BoardConfig/override.mk" >> device/xiaomi/renoir/BoardConfig.mk
-
-[ $GAPPS -eq 1 ] && echo 'PRODUCT_PACKAGES_REMOVE += libjni_latinimegoogle.so' >> device/xiaomi/renoir/lineage_renoir.mk
-
-# 4. 🔥 CONDITIONAL SYSTEM RESIZE (GApps ONLY)
-if [ $RESIZE -eq 1 ]; then
-    # Remove any existing resize lines
-    sed -i '/BOARD_SUPER_PARTITION_SIZE/,+4d' device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || true
-    
-    cat >> device/xiaomi/renoir/BoardConfig.mk << 'EOF'
-
-# 🔥 6GB SYSTEM SPACE (GApps ONLY - 4GB system + 2GB product)
-BOARD_SUPER_PARTITION_SIZE
+include device/xiaomi/renoir/Board
