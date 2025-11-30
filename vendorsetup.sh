@@ -1,17 +1,22 @@
 #!/bin/bash
-# crDroid renoir Build Script (ALWAYS 6GB System + GApps Option + Duplicate Fix)
+# crDroid renoir Build Script (SAFE Vanilla + GApps 6GB Resize)
 set -e
 
 echo "🚀 crDroid renoir Build Script (Xiaomi Mi 11 Lite 5G - SM8350)"
 echo "============================================================"
-echo "✅ ALWAYS 6GB system space (GApps + Vanilla optimized)"
 
 # 🔥 INTERACTIVE GAPPS
 read -p "Install GApps? (y/N): " -n 1 -r
 echo
 GAPPS=$([[ $REPLY =~ ^[Yy]$ ]] && echo 1 || echo 0)
 
-[ $GAPPS -eq 1 ] && echo "✅ GApps enabled" || echo "✅ Vanilla build"
+if [ $GAPPS -eq 1 ]; then
+    echo "✅ GApps + 6GB system resize enabled"
+    RESIZE=1
+else
+    echo "✅ Vanilla build (default partitions - SAFE)"
+    RESIZE=0
+fi
 
 # 1. BACKUP ORIGINALS
 [ -f device/xiaomi/renoir/BoardConfig.mk.bak ] || cp device/xiaomi/renoir/BoardConfig.mk device/xiaomi/renoir/BoardConfig.mk.bak
@@ -39,4 +44,25 @@ fi
 
 # 3. 🔥 DUPLICATE FIX (Always safe)
 mkdir -p device/xiaomi/renoir/BoardConfig
-cat > device
+cat > device/xiaomi/renoir/BoardConfig/override.mk << 'EOF'
+# 🔥 Soong duplicate overrides (libjni_latinimegoogle.so)
+BUILD_BROKEN_DUP_RULES := true
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+BUILD_BROKEN_MISSING_PREBUILT_ELF_FILES := true
+EOF
+
+grep -q "override.mk" device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || \
+echo -e "
+include device/xiaomi/renoir/BoardConfig/override.mk" >> device/xiaomi/renoir/BoardConfig.mk
+
+[ $GAPPS -eq 1 ] && echo 'PRODUCT_PACKAGES_REMOVE += libjni_latinimegoogle.so' >> device/xiaomi/renoir/lineage_renoir.mk
+
+# 4. 🔥 CONDITIONAL SYSTEM RESIZE (GApps ONLY)
+if [ $RESIZE -eq 1 ]; then
+    # Remove any existing resize lines
+    sed -i '/BOARD_SUPER_PARTITION_SIZE/,+4d' device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || true
+    
+    cat >> device/xiaomi/renoir/BoardConfig.mk << 'EOF'
+
+# 🔥 6GB SYSTEM SPACE (GApps ONLY - 4GB system + 2GB product)
+BOARD_SUPER_PARTITION_SIZE
