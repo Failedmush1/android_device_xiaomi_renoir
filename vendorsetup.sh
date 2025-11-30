@@ -1,17 +1,17 @@
 #!/bin/bash
-# crDroid renoir - PERFECT SYNTAX (No EOF errors)
+# crDroid renoir - RESIZE ONLY VANILLA (GApps = default)
 set -e
 
 clear
-echo "🚀 crDroid renoir Build Script v2.0 (EOF FIXED)"
-echo "================================================"
+echo "🚀 crDroid renoir Build Script v2.1 (Vanilla 6GB Resize)"
+echo "======================================================"
 
 # INTERACTIVE
 read -p "GApps? (y/N): " -n 1 -r
 echo
 GAPPS=$([[ $REPLY =~ ^[Yy]$ ]] && echo 1 || echo 0)
 
-echo "${GAPPS:+✅ GApps + 6GB resize}${GAPPS:+-}${GAPPS:+| }${GAPPS:+Vanilla (default)}"
+echo "${GAPPS:+✅ GApps (default resize)}${GAPPS:-✅ Vanilla + 6GB resize}"
 
 # CLEANUP FIRST
 rm -f device/xiaomi/renoir/vendorsetup.sh 2>/dev/null || true
@@ -51,16 +51,19 @@ grep -q "override.mk" device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || \
 echo -e "
 include device/xiaomi/renoir/BoardConfig/override.mk" >> device/xiaomi/renoir/BoardConfig.mk
 
-# RESIZE (GApps only)
+# 🔥 RESIZE ONLY VANILLA (GApps = device defaults)
 sed -i '/BOARD_SUPER_PARTITION/,+5d' device/xiaomi/renoir/BoardConfig.mk 2>/dev/null || true
-if [ $GAPPS -eq 1 ]; then
+if [ $GAPPS -eq 0 ]; then  # ← CHANGED: Vanilla only
     {
         echo ""
-        echo "# 6GB GApps resize"
+        echo "# 6GB VANILLA Resize (headroom for OTA/Magisk)"
         echo "BOARD_SUPER_PARTITION_SIZE         := 8589934592"
         echo "BOARD_SYSTEMIMAGE_PARTITION_SIZE   := 4294967296"
         echo "BOARD_PRODUCTIMAGE_PARTITION_SIZE  := 2147483648"
     } >> device/xiaomi/renoir/BoardConfig.mk
+    echo "✅ 6GB Vanilla resize applied"
+else
+    echo "✅ GApps = device default partitions"
 fi
 
 echo "✅ Config OK - Building..."
