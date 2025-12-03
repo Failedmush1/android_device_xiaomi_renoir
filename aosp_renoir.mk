@@ -7,14 +7,8 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff.
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
-
-# Additions
-$(call inherit-product-if-exists, vendor/gapps/common.mk)
-$(call inherit-product-if-exists, vendor/prebuilt-apps/config.mk)
-
--include vendor/lineage-priv/keys/keys.mk
+# Inherit some common aosp stuff.
+$(call inherit-product, vendor/aosp/config/common_full_phone.mk)
 
 
 
@@ -22,7 +16,7 @@ PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := M2101K9R
-PRODUCT_NAME := lineage_renoir
+PRODUCT_NAME := aosp_renoir
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
     BuildDesc="renoir_global-user 13 TKQ1.220829.002 V14.0.7.0.TKIMIXM release-keys" \
