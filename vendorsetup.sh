@@ -1,6 +1,5 @@
 #!/bin/bash
 # crDroid renoir - PERFECT SYNTAX (No EOF errors)
-set -e
 
 clear
 echo "🚀 crDroid renoir Build Script v2.2 (No Resize & Stability Fix)"
