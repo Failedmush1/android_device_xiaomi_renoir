@@ -8,7 +8,7 @@
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
 # Inherit some common LumineDroid stuff.
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+$(call inherit-product, vendor/lumine/config/common_full_phone.mk)
 LUMINE_MAINTAINER := Failedmush
 
 -include vendor/lineage-priv/keys/keys.mk
