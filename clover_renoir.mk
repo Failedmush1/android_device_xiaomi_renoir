@@ -13,6 +13,8 @@ $(call inherit-product, vendor/clover/config/common_full_phone.mk)
 # Clover Kingdom
 CLOVER_BUILDTYPE := UNOFFICIAL
 TARGET_BOOT_ANIMATION_RES := 1080
+TARGET_ENABLE_BLUR := false
+TARGET_INCLUDE_PIXEL_LAUNCHER := false
 
 -include vendor/lineage-priv/keys/keys.mk
 
