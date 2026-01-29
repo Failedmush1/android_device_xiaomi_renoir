@@ -35,3 +35,4 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
 # Include proprietary files
 include vendor/xiaomi/renoir/BoardConfigVendor.mk
+BUILD_BROKEN_MISSING_REQUIRED_MODULES := true
