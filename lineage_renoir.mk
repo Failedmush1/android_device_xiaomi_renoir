@@ -19,6 +19,15 @@ WITH_GMS := false
 TARGET_ENABLE_BLUR := false
 TARGET_SUPPORTS_QUICK_TAP := true
 BYPASS_CHARGE_SUPPORTED := true
+ro.mist.display=1080 x 2400, 60/90hz
+ro.mist.battery=4200mah
+ro.mist.soc=Snapdragon® 780G
+ro.mist.camera=64,13,5
+ro.mist.front=20MP
+ro.mist.platform=SM7350
+ro.mist.screen=6.55' LCD
+ro.mist.device.name=Mi 11 lite 5G
+
 -include vendor/lineage-priv/keys/keys.mk
 
 PRODUCT_BRAND := Xiaomi
