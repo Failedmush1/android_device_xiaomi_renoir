@@ -16,7 +16,9 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 MIST_BUILD_TYPE := UNOFFICIAL
 MISTOS_MAINTAINER := Failedmush
 WITH_GMS := false
-
+TARGET_ENABLE_BLUR := false
+TARGET_SUPPORTS_QUICK_TAP := true
+BYPASS_CHARGE_SUPPORTED := true
 -include vendor/lineage-priv/keys/keys.mk
 
 PRODUCT_BRAND := Xiaomi
