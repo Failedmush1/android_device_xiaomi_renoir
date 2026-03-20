@@ -12,6 +12,10 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/gms/gms_pico.mk
 
+# Mist OS Flags
+MIST_BUILD_TYPE := UNOFFICIAL
+MISTOS_MAINTAINER := Failedmush
+WITH_GMS := false
 
 -include vendor/lineage-priv/keys/keys.mk
 
