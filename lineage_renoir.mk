@@ -11,7 +11,7 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 
-PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/extra/keys/releasekey
+-include vendor/extra/product.mk
 
 
 
