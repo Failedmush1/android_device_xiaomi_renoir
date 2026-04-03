@@ -14,7 +14,7 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 $(call inherit-product-if-exists, vendor/gapps/common.mk)
 $(call inherit-product-if-exists, vendor/prebuilt-apps/config.mk)
 
--include vendor/lineage-priv/keys/keys.mk
+PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/extra/keys/releasekey
 
 
 
