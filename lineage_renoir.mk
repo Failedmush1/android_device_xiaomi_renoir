@@ -11,7 +11,7 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 
--include vendor/extra/product.mk
+-include vendor/lineage-priv/keys/keys.mk
 
 
 
