@@ -31,9 +31,7 @@ PRODUCT_COPY_FILES += \
 
 # Overlays
 PRODUCT_PACKAGES += \
-    ApertureOverlayRenoir
-
-PRODUCT_PACKAGES += \
+    ApertureOverlayRenoir \
     FrameworkOverlayRenoir \
     SettingsOverlayRenoir \
     SettingsProviderOverlayRenoir \
