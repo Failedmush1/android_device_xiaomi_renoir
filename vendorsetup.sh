@@ -6,7 +6,11 @@ endcolor="\u001B[0m"
 
 echo -e "${color}Setup Gapps${endcolor}"
 
-read -p "Do you want to build with gapps support? (yes/no): " USER_INPUT
+if [[ "$WITH_GMS" == "true" ]]; then
+    USER_INPUT="yes"
+else
+    USER_INPUT="no"
+fi
 
 if [[ "$USER_INPUT" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     echo "Gapps support enabled."
