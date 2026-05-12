@@ -16,7 +16,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/sound_trigger_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_shima/sound_trigger_platform_info.xml
 
 # BCR
-$(call inherit-product, vendor/bcr/bcr.mk)
+$(call inherit-product-if-exists, vendor/bcr/bcr.mk)
 
 # Camera
 $(call inherit-product-if-exists, vendor/xiaomi/camera/miuicamera.mk)
@@ -26,10 +26,22 @@ PRODUCT_SYSTEM_PROPERTIES += \
     ro.product.mod_device=renoir_global
 
 # NFC
+PRODUCT_PACKAGES += \
+    com.android.nfcservices \
+    NfcNci \
+    Tag \
+    android.hardware.nfc-service.nxp
+
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/nfc/libnfc-nci.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nci.conf \
     $(LOCAL_PATH)/nfc/libnfc-nxp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp.conf \
     $(LOCAL_PATH)/nfc/libnfc-nxp_RF.conf:$(TARGET_COPY_OUT_VENDOR)/etc/libnfc-nxp_RF.conf
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.xml \
+    frameworks/native/data/etc/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hce.xml \
+    frameworks/native/data/etc/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hcef.xml \
+    packages/modules/Nfc/NfcNci/com.android.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/com.android.nfcservices.xml
 
 # Overlays
 PRODUCT_PACKAGES += \
