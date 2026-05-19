@@ -309,4 +309,15 @@
 
     <!-- The default peak refresh rate. -->
     <integer name="config_defaultPeakRefreshRate">90</integer>
+
+    <!-- Whether the device supports Secure NFC. -->
+    <bool name="config_secureNfcCapable">true</bool>
+
+    <!-- List of SKUs that support Secure NFC -->
+    <string-array name="config_skuSupportsSecureNfc" translatable="false">
+        <item>renoir</item>
+        <item>renoir_global</item>
+        <item>renoir_jp</item>
+        <item>M2101K9R</item>
+    </string-array>
 </resources>

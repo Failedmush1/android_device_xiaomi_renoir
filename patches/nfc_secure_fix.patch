@@ -1,0 +1,26 @@
+diff --git a/src/com/android/nfc/NfcService.java b/src/com/android/nfc/NfcService.java
+index 4936d9f..daf1818 100644
+--- a/src/com/android/nfc/NfcService.java
++++ b/src/com/android/nfc/NfcService.java
+@@ -607,7 +607,7 @@ public class NfcService implements DeviceHostListener {
+         }
+         mForegroundUtils = ForegroundUtils.getInstance(mActivityManager);
+ 
+-        mIsSecureNfcCapable = mNfcAdapter.deviceSupportsNfcSecure();
++        mIsSecureNfcCapable = true; // Forced for renoir
+         mIsSecureNfcEnabled =
+             mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT) &&
+             mIsSecureNfcCapable;
+@@ -1636,12 +1636,6 @@ public class NfcService implements DeviceHostListener {
+ 
+         @Override
+         public boolean deviceSupportsNfcSecure() {
+-            String skuList[] = mContext.getResources().getStringArray(
+-                R.array.config_skuSupportsSecureNfc);
+-            String sku = SystemProperties.get("ro.boot.hardware.sku");
+-            if (TextUtils.isEmpty(sku) || !ArrayUtils.contains(skuList, sku)) {
+-                return false;
+-            }
+             return true;
+         }
+ 
