@@ -11,10 +11,15 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 # Additions
-$(call inherit-product-if-exists, vendor/gapps/common.mk)
-$(call inherit-product-if-exists, vendor/prebuilt-apps/config.mk)
+# $(call inherit-product-if-exists, vendor/gapps/common.mk)
+# $(call inherit-product-if-exists, vendor/prebuilt-apps/config.mk)
+
+WITH_GMS := false
+RISING_MAINTAINER := Failedmush
+RISING_CHIPSET := Snapdragon_780G
 
 PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/extra/keys/releasekey
+-include vendor/extra/keys/keys.mk
 
 
 
