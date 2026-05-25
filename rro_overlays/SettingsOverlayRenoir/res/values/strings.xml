@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <string name="build_maintainer_summary">Failedmush</string>
+    <!-- Add your donate URL here if you want it to be clickable -->
+    <string name="build_maintainer_donate_url"></string>
+</resources>
