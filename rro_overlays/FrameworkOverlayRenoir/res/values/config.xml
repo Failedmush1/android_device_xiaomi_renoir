@@ -344,4 +344,12 @@
          rates are available from hardware composer. Only has an effect if the value is
          non-zero. -->
     <integer name="config_defaultPeakRefreshRate">90</integer>
+
+    <!-- List of dynamic HDR profiles supported by the device. -->
+    <integer-array name="config_dynamicHdrSupportedProfiles">
+        <item>1</item> <!-- HDR10 -->
+        <item>2</item> <!-- HLG -->
+        <item>3</item> <!-- HDR10+ -->
+        <item>4</item> <!-- Dolby Vision -->
+    </integer-array>
 </resources>
