@@ -39,9 +39,14 @@ PRODUCT_PACKAGES += \
     SystemUIOverlayRenoir \
     WifiOverlayRenoir
 
+# BCR
+TARGET_PREBUILT_BCR := false
+PRODUCT_PACKAGES += bcr
+
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
-    $(LOCAL_PATH)
+    $(LOCAL_PATH) \
+    vendor/bcr
 
 # Vibrator
 $(call soong_config_set,qti_vibrator,effect_lib,libqtivibratoreffect.xiaomi)
