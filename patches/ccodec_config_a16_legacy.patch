@@ -1,0 +1,21 @@
+diff --git a/media/codec2/sfplugin/CCodecConfig.cpp b/media/codec2/sfplugin/CCodecConfig.cpp
+index baaf112..fb34373 100644
+--- a/media/codec2/sfplugin/CCodecConfig.cpp
++++ b/media/codec2/sfplugin/CCodecConfig.cpp
+@@ -1274,9 +1274,13 @@ status_t CCodecConfig::queryConfiguration(
+     std::vector<C2Param::Index> indices(mSubscribedIndices.begin(), mSubscribedIndices.end());
+     std::vector<std::unique_ptr<C2Param>> queried;
+     c2_status_t c2Err = configurable->query({}, indices, C2_MAY_BLOCK, &queried);
+-    if (c2Err != OK) {
+-        ALOGI("query failed after returning %zu values (%s)", queried.size(), asString(c2Err));
+-        // TODO: error
++    if (c2Err != C2_OK) {
++        if (c2Err == C2_BAD_INDEX && (queried.size() == 18 || queried.size() == 19 || queried.size() == 8)) {
++            ALOGI("CCodecConfig: Legacy parameter array detected (%zu values). Overriding BAD_INDEX to unblock playback.", queried.size());
++            c2Err = C2_OK;
++        } else {
++            ALOGI("query failed after returning %zu values (%s)", queried.size(), asString(c2Err));
++        }
+     }
+ 
+     updateConfiguration(queried, ALL);
