@@ -1,0 +1,80 @@
+diff --git a/media/codec2/sfplugin/CCodecBufferChannel.cpp b/media/codec2/sfplugin/CCodecBufferChannel.cpp
+index d26f2ac..99b5486 100644
+--- a/media/codec2/sfplugin/CCodecBufferChannel.cpp
++++ b/media/codec2/sfplugin/CCodecBufferChannel.cpp
+@@ -396,6 +396,10 @@ status_t CCodecBufferChannel::queueInputBufferInternal(
+     }
+     if (buffer->meta()->findInt32("csd", &tmp) && tmp) {
+         flags |= C2FrameData::FLAG_CODEC_CONFIG;
++        // Forced CSD priority for legacy Dolby on Android 16
++        if (strstr(mName, "dolby")) {
++            ALOGI("[%s] CSD detected, forcing priority delivery", mName);
++        }
+     }
+     if (buffer->meta()->findInt32("tunnel-first-frame", &tmp) && tmp) {
+         tunnelFirstFrame = true;
+@@ -407,6 +411,19 @@ status_t CCodecBufferChannel::queueInputBufferInternal(
+             mName, buffer->size(), (long long)timeUs);
+     std::list<std::unique_ptr<C2Work>> items;
+     std::unique_ptr<C2Work> work(new C2Work);
++    
++    // Final Legacy Sync: If this is CSD, queue it immediately and separately for Dolby
++    if ((flags & C2FrameData::FLAG_CODEC_CONFIG) && strstr(mName, "dolby")) {
++        work->input.ordinal.timestamp = 0;
++        work->input.ordinal.frameIndex = mFrameIndex++;
++        work->input.flags = (C2FrameData::flags_t)flags;
++        items.push_back(std::move(work));
++        std::atomic_load(&mComponent)->queue(&items);
++        items.clear();
++        work.reset(new C2Work);
++        ALOGI("[%s] CSD flushed to component separately", mName);
++    }
++
+     work->input.ordinal.timestamp = timeUs;
+     work->input.ordinal.frameIndex = mFrameIndex++;
+     // WORKAROUND: until codecs support handling work after EOS and max output sizing, use timestamp
+@@ -591,6 +608,18 @@ status_t CCodecBufferChannel::setParameters(std::vector<std::unique_ptr<C2Param>
+                           std::make_move_iterator(params.begin()),
+                           std::make_move_iterator(params.end()));
+     params.clear();
++
++    // Forced sync for Dolby components on Android 16 to ensure CSD is processed first
++    if (strstr(mName, "dolby") && !mParamsToBeSet.empty()) {
++        std::vector<C2Param*> configParams;
++        for (const std::unique_ptr<C2Param> &p : mParamsToBeSet) {
++            configParams.push_back(p.get());
++        }
++        std::vector<std::unique_ptr<C2SettingResult>> failures;
++        std::atomic_load(&mComponent)->config(configParams, C2_MAY_BLOCK, &failures);
++        mParamsToBeSet.clear();
++        ALOGI("[%s] Forced config sync for legacy CSD handshake", mName);
++    }
+     return OK;
+ }
+ 
+@@ -2270,7 +2299,7 @@ status_t CCodecBufferChannel::requestInitialInputBuffers(
+             return UNKNOWN_ERROR;
+         }
+     }
+-    if (oStreamFormat.value == C2BufferData::LINEAR &&
++    if ((oStreamFormat.value == C2BufferData::LINEAR || strstr(mName, "dolby")) &&
+             (!prepend || prepend.value == PREPEND_HEADER_TO_NONE) &&
+             !clientInputBuffers.empty()) {
+         size_t minIndex = clientInputBuffers.begin()->first;
+@@ -2511,8 +2540,14 @@ bool CCodecBufferChannel::handleWork(
+     if ((work->input.ordinal.frameIndex -
+             mFirstValidFrameIndex.load()).peek() < 0) {
+         // Discard frames from previous generation.
+-        ALOGD("[%s] Discard frames from previous generation.", mName);
+-        notifyClient = false;
++        // Bypass for Dolby on Android 16 to handle legacy frame indexing
++        if (strstr(mName, "dolby")) {
++             ALOGI("[%s] Rescuing legacy frame index %lld from discard", 
++                   mName, (long long)work->input.ordinal.frameIndex.peekll());
++        } else {
++            ALOGD("[%s] Discard frames from previous generation.", mName);
++            notifyClient = false;
++        }
+     }
+ 
+     if (!mHasInputSurface && (work->worklets.size() != 1u

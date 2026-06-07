@@ -1,0 +1,15 @@
+diff --git a/media/codec2/sfplugin/CCodecResources.cpp b/media/codec2/sfplugin/CCodecResources.cpp
+index 9934049..964d90b 100644
+--- a/media/codec2/sfplugin/CCodecResources.cpp
++++ b/media/codec2/sfplugin/CCodecResources.cpp
+@@ -170,8 +170,8 @@ status_t CCodecResources::queryRequiredResources(
+             C2_MAY_BLOCK,
+             &heapParams);
+     if (c2err != C2_OK || heapParams.size() != 1u) {
+-        ALOGE("Failed to query component interface for required system resources: %d", c2err);
+-        return UNKNOWN_ERROR;
++        ALOGW("Failed to query component interface for required system resources: %d. Ignoring for legacy compatibility.", c2err);
++        return OK;
+     }
+ 
+     // Construct Required System Resources.

@@ -1,0 +1,31 @@
+diff --git a/media/codec2/sfplugin/CCodecBufferChannel.cpp b/media/codec2/sfplugin/CCodecBufferChannel.cpp
+index d26f2ac..885ba93 100644
+--- a/media/codec2/sfplugin/CCodecBufferChannel.cpp
++++ b/media/codec2/sfplugin/CCodecBufferChannel.cpp
+@@ -591,6 +591,17 @@ status_t CCodecBufferChannel::setParameters(std::vector<std::unique_ptr<C2Param>
+                           std::make_move_iterator(params.begin()),
+                           std::make_move_iterator(params.end()));
+     params.clear();
++
++    // Force flush for Dolby components on Android 16 to ensure CSD is processed first
++    if (mName.find("dolby") != std::string::npos && !mParamsToBeSet.empty()) {
++        std::list<std::unique_ptr<C2Config>> flushedConfigs;
++        for (std::unique_ptr<C2Param> &p : mParamsToBeSet) {
++            flushedConfigs.push_back(std::unique_ptr<C2Config>(static_cast<C2Config*>(p.release())));
++        }
++        mParamsToBeSet.clear();
++        std::atomic_load(&mComponent)->queue(&flushedConfigs);
++        ALOGI("[%s] Forced config flush for legacy CSD handshake", mName.c_str());
++    }
+     return OK;
+ }
+ 
+@@ -2270,7 +2281,7 @@ status_t CCodecBufferChannel::requestInitialInputBuffers(
+             return UNKNOWN_ERROR;
+         }
+     }
+-    if (oStreamFormat.value == C2BufferData::LINEAR &&
++    if ((oStreamFormat.value == C2BufferData::LINEAR || (mName.find("dolby") != std::string::npos)) &&
+             (!prepend || prepend.value == PREPEND_HEADER_TO_NONE) &&
+             !clientInputBuffers.empty()) {
+         size_t minIndex = clientInputBuffers.begin()->first;
