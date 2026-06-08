@@ -7,7 +7,7 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
--include vendor/voltage-priv/keys/keys.mk
+-include vendor/lineage-priv/keys/keys.mk
 
 # Inherit some common Voltage stuff.
 $(call inherit-product, vendor/voltage/config/common_full_phone.mk)
