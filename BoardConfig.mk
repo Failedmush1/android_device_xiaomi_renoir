@@ -39,5 +39,9 @@ BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 # Properties
 TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
+# Halcyon
+include vendor/halcyon/config/HalcyonConfig.mk
+-include vendor/halcyon/config/BoardConfigReservedSize.mk
+
 # Include proprietary files
 include vendor/xiaomi/renoir/BoardConfigVendor.mk
