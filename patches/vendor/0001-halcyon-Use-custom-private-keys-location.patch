@@ -1,0 +1,26 @@
+From 20b0c25d8c62b7be0df36837b78565f3ffb499ad Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Thu, 18 Jun 2026 03:21:41 +0000
+Subject: [PATCH] halcyon: Use custom private keys location
+
+Point signing keys to vendor/lineage-priv/keys/keys.mk
+---
+ config/common.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 49c5204..88c53e9 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -147,6 +147,6 @@ include vendor/halcyon/config/version.mk
+ # Include halcyonUI
+ include vendor/halcyonui/config.mk
+ 
+--include vendor/enchanted/keys/keys.mk
++-include vendor/lineage-priv/keys/keys.mk
+ 
+ -include $(WORKSPACE)/build_env/image-auto-bits.mk
+\ No newline at end of file
+-- 
+2.43.0
+
