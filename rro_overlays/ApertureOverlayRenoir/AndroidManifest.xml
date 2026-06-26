@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: The neotericOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.lineageos.aperture.renoir">
-    <overlay android:targetPackage="org.lineageos.aperture"
+          package="org.neotericos.aperture.renoir">
+    <overlay android:targetPackage="org.neotericos.aperture"
              android:isStatic="true"
              android:priority="200" />
 </manifest>

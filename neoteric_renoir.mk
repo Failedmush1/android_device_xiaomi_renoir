@@ -6,21 +6,14 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff.
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
-
--include vendor/lineage-priv/keys/keys.mk
-
-WITH_GMS := false
-WITH_BCR := true
-TARGET_OPTIMIZED_DEXOPT := true
-TARGET_DEFAULT_PIXEL_LAUNCHER := false
+# Inherit some common Neoteric stuff.
+$(call inherit-product, vendor/neoteric/target/product/neoteric-target.mk)
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := M2101K9R
-PRODUCT_NAME := lineage_renoir
+PRODUCT_NAME := neoteric_renoir
 PRODUCT_MAINTAINER := Failedmush
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
