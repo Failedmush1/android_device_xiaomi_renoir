@@ -23,18 +23,15 @@ BOOT_KERNEL_MODULES := \
     apr_dlkm.ko \
     focaltech_touch.ko \
     goodix_core.ko \
-    hwid.ko \
     mmhardware_sysfs_dlkm.ko \
-    msm_drm.ko \
     q6_notifier_dlkm.ko \
     q6_pdr_dlkm.ko \
-    qti_battery_charger_main.ko \
     snd_event_dlkm.ko \
     xiaomi_touch.ko
 BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOOT_KERNEL_MODULES)
 
 # Partitions
-BOARD_DTBOIMG_PARTITION_SIZE := 25165824
+#BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 
 # Properties
 TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
