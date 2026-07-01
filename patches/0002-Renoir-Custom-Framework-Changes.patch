@@ -1,0 +1,293 @@
+From 28f422f188acfed8d1e70620389078a504be3370 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Wed, 1 Jul 2026 00:29:17 +0000
+Subject: [PATCH] fw/b: Custom changes for Renoir: 4G icon and NFC toggle
+
+Change-Id: I47f375be062d1dab39fcf780acfd18df16bf1385
+---
+ .../settingslib/mobile/MobileMappings.java    |  2 +-
+ .../settingslib/mobile/TelephonyIcons.java    |  4 +-
+ packages/SystemUI/res/drawable/ic_qs_nfc.xml  | 45 +++++++++----------
+ .../res/drawable/ic_statusbar_nfc.xml         | 29 ++++++++++++
+ .../SystemUI/res/drawable/stat_sys_nfc.xml    | 29 ++++++++++++
+ packages/SystemUI/res/values/strings.xml      |  1 +
+ .../SystemUI/res/xml/status_bar_prefs.xml     |  5 +++
+ .../statusbar/phone/PhoneStatusBarPolicy.java | 23 ++++++++++
+ 8 files changed, 111 insertions(+), 27 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+index cf52eb3ab060..3e37d33d838e 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
++++ b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+@@ -215,7 +215,7 @@ public class MobileMappings {
+         public boolean showAtLeast3G = false;
+         public boolean show4gFor3g = false;
+         public boolean alwaysShowCdmaRssi = false;
+-        public boolean show4gForLte = false;
++        public boolean show4gForLte = true;
+         public boolean show4glteForLte = false;
+         public boolean hideLtePlus = false;
+         public boolean hspaDataDistinguishable;
+diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java b/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
+index 615c05addd14..5914f43a443c 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
++++ b/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
+@@ -136,13 +136,13 @@ public class TelephonyIcons {
+     public static final MobileIconGroup LTE = new MobileIconGroup(
+             "LTE",
+             R.string.data_connection_lte,
+-            TelephonyIcons.ICON_LTE
++            TelephonyIcons.ICON_4G
+     );
+ 
+     public static final MobileIconGroup LTE_PLUS = new MobileIconGroup(
+             "LTE+",
+             R.string.data_connection_lte_plus,
+-            TelephonyIcons.ICON_LTE_PLUS
++            TelephonyIcons.ICON_4G_PLUS
+     );
+ 
+     public static final MobileIconGroup FOUR_G_LTE = new MobileIconGroup(
+diff --git a/packages/SystemUI/res/drawable/ic_qs_nfc.xml b/packages/SystemUI/res/drawable/ic_qs_nfc.xml
+index 2c080964b48e..3202d8d47693 100644
+--- a/packages/SystemUI/res/drawable/ic_qs_nfc.xml
++++ b/packages/SystemUI/res/drawable/ic_qs_nfc.xml
+@@ -1,31 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
+ <!--
+-     Copyright (C) 2016 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
++/*
++ * Copyright (C) 2017 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
+ -->
+ <vector xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:width="48dp"
+-    android:height="48dp"
++    android:width="24dp"
++    android:height="24dp"
+     android:viewportWidth="24"
+-    android:viewportHeight="24">
+-
+-    <path
+-        android:pathData="M4 20h16V4H4v16z" />
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
+     <path
+         android:fillColor="#FFFFFFFF"
+-        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0
+-18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2
+-2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
+-    <path
+-        android:pathData="M0 0h24v24H0z" />
++        android:pathData="M10.59,7.66C10.59,7.66 11.19,7.39 11.57,7.82C11.95,8.26 12.92,9.94 12.92,11.62C12.92,13.3 12.5,15.09 12.05,15.68C11.62,16.28 11.19,16.28 10.86,16.06C10.54,15.85 5.5,12 5.23,11.89C4.95,11.78 4.85,12.05 5.12,13.5C5.39,15 4.95,15.41 4.57,15.47C4.2,15.5 3.06,15.2 3,12.16C2.95,9.13 3.76,8.64 4.14,8.64C4.85,8.64 10.27,13.5 10.64,13.46C10.97,13.41 11.13,11.35 10.5,9.72C9.78,7.96 10.59,7.66 10.59,7.66M19.3,4.63C21.12,8.24 21,11.66 21,12C21,12.34 21.12,15.76 19.3,19.37C19.3,19.37 18.83,19.92 18.12,19.59C17.42,19.26 17.66,18.4 17.66,18.4C17.66,18.4 19.14,15.55 19.1,12.05V12C19.14,8.5 17.66,5.6 17.66,5.6C17.66,5.6 17.42,4.74 18.12,4.41C18.83,4.08 19.3,4.63 19.3,4.63M15.77,6.25C17.26,8.96 17.16,11.66 17.14,12C17.16,12.34 17.26,14.92 15.77,17.85C15.77,17.85 15.3,18.4 14.59,18.07C13.89,17.74 14.13,16.88 14.13,16.88C14.13,16.88 15.09,15.5 15.24,12.05V12C15.14,8.53 14.13,7.23 14.13,7.23C14.13,7.23 13.89,6.36 14.59,6.04C15.3,5.71 15.77,6.25 15.77,6.25Z" />
+ </vector>
+diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+new file mode 100644
+index 000000000000..55da075f6b48
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+@@ -0,0 +1,29 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/*
++ * Copyright (C) 2017 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++    <path android:pathData="M4 20h16V4H4v16z" />
++    <path android:fillColor="#FFFFFFFF"
++        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++    <path android:pathData="M0 0h24v24H0z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/stat_sys_nfc.xml b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+new file mode 100644
+index 000000000000..08d8892ab035
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+@@ -0,0 +1,29 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/*
++ * Copyright (C) 2017 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<inset xmlns:android="http://schemas.android.com/apk/res/android"
++    android:insetLeft="2.5dp"
++    android:insetRight="2.5dp">
++    <vector android:width="17dp" android:height="17dp"
++        android:viewportWidth="24" android:viewportHeight="24">
++        <path android:pathData="M4 20h16V4H4v16z" />
++        <path android:fillColor="#FFFFFFFF"
++            android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++        <path android:pathData="M0 0h24v24H0z" />
++    </vector>
++</inset>
+diff --git a/packages/SystemUI/res/values/strings.xml b/packages/SystemUI/res/values/strings.xml
+index 20075caa7c10..a90c87680115 100644
+--- a/packages/SystemUI/res/values/strings.xml
++++ b/packages/SystemUI/res/values/strings.xml
+@@ -1117,6 +1117,7 @@
+     <string name="quick_settings_dark_mode_secondary_label_until_bedtime_ends">Until bedtime ends</string>
+ 
+     <!-- QuickSettings: NFC tile [CHAR LIMIT=NONE] -->
++    <string name="status_bar_nfc">NFC</string>
+     <string name="quick_settings_nfc_label">NFC</string>
+     <!-- QuickSettings: NFC (off) [CHAR LIMIT=NONE] -->
+     <string name="quick_settings_nfc_off">NFC is disabled</string>
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index 0c6a850b7fe9..7adc12d01e79 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -57,6 +57,11 @@
+         android:key="bluetooth"
+         android:title="@string/quick_settings_bluetooth_label" />
+ 
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_nfc"
++        android:key="nfc"
++        android:title="@string/status_bar_nfc" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_camera"
+         android:key="cameratoggle"
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+index 5ced9243cb10..2f2749cf1934 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
+ import android.content.pm.ResolveInfo;
+ import android.content.res.Resources;
+ import android.media.AudioManager;
++import android.nfc.NfcAdapter;
+ import android.net.ConnectivityManager;
+ import android.net.Network;
+ import android.net.NetworkCapabilities;
+@@ -133,6 +134,7 @@ public class PhoneStatusBarPolicy
+     private final String mSlotScreenRecord;
+     private final String mSlotConnectedDisplay;
+     private final String mSlotFirewall;
++    private final String mSlotNfc;
+     private final int mDisplayId;
+     private final SharedPreferences mSharedPreferences;
+     private final DateFormatUtil mDateFormatUtil;
+@@ -142,6 +144,7 @@ public class PhoneStatusBarPolicy
+ 
+     private final Context mContext;
+     private final Handler mHandler;
++    private NfcAdapter mNfcAdapter;
+     private final HotspotController mHotspot;
+     private final NextAlarmController mNextAlarmController;
+     private final AlarmManager mAlarmManager;
+@@ -258,6 +261,7 @@ public class PhoneStatusBarPolicy
+         mSlotScreenRecord = resources.getString(
+                 com.android.internal.R.string.status_bar_screen_record);
+         mSlotFirewall = resources.getString(R.string.status_bar_firewall_slot);
++        mSlotNfc = resources.getString(com.android.internal.R.string.status_bar_nfc);
+ 
+         mDisplayId = displayId;
+         mSharedPreferences = sharedPreferences;
+@@ -277,6 +281,7 @@ public class PhoneStatusBarPolicy
+         filter.addAction(Intent.ACTION_PROFILE_REMOVED);
+         filter.addAction(Intent.ACTION_PROFILE_ACCESSIBLE);
+         filter.addAction(Intent.ACTION_PROFILE_INACCESSIBLE);
++        filter.addAction(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
+         mBroadcastDispatcher.registerReceiverWithHandler(mIntentReceiver, filter, mHandler);
+         Observer<Integer> observer = ringer -> mHandler.post(this::updateVolumeZen);
+ 
+@@ -358,6 +363,12 @@ public class PhoneStatusBarPolicy
+         mIconController.setIcon(mSlotScreenRecord, R.drawable.stat_sys_screen_record, null);
+         mIconController.setIconVisibility(mSlotScreenRecord, false);
+ 
++        // nfc
++        mIconController.setIcon(mSlotNfc, R.drawable.stat_sys_nfc,
++                mResources.getString(R.string.status_bar_nfc));
++        mIconController.setIconVisibility(mSlotNfc, false);
++        updateNfc();
++
+         // firewall
+         mIconController.setIcon(mSlotFirewall, R.drawable.stat_sys_firewall, null);
+         mIconController.setIconVisibility(mSlotFirewall, mFirewallVisible);
+@@ -788,6 +799,15 @@ public class PhoneStatusBarPolicy
+         }
+     }
+ 
++    private void updateNfc() {
++        if (mNfcAdapter == null) {
++            mNfcAdapter = NfcAdapter.getDefaultAdapter(mContext);
++        }
++        if (mNfcAdapter != null) {
++            mIconController.setIconVisibility(mSlotNfc, mNfcAdapter.isEnabled());
++        }
++    }
++
+     @Override
+     public void onDataSaverChanged(boolean isDataSaving) {
+         mIconController.setIconVisibility(mSlotDataSaver, isDataSaving);
+@@ -875,6 +895,9 @@ public class PhoneStatusBarPolicy
+                 case AudioManager.ACTION_HEADSET_PLUG:
+                     updateHeadsetPlug(intent);
+                     break;
++                case NfcAdapter.ACTION_ADAPTER_STATE_CHANGED:
++                    updateNfc();
++                    break;
+             }
+         }
+     };
+-- 
+2.43.0
+
