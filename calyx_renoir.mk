@@ -10,6 +10,9 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Calyx stuff.
 $(call inherit-product, vendor/calyx/config/common_phone.mk)
 
+PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/lineage-priv/keys/releasekey
+-include vendor/lineage-priv/keys/keys.mk
+
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
 PRODUCT_MANUFACTURER := Xiaomi

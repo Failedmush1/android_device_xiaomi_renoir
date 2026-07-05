@@ -1,7 +1,7 @@
-From 28f422f188acfed8d1e70620389078a504be3370 Mon Sep 17 00:00:00 2001
+From c4f6494afd5b17224891e80eaf145ca6875d3138 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
 Date: Wed, 1 Jul 2026 00:29:17 +0000
-Subject: [PATCH] fw/b: Custom changes for Renoir: 4G icon and NFC toggle
+Subject: [PATCH 3/4] fw/b: Custom changes for Renoir: 4G icon and NFC toggle
 
 Change-Id: I47f375be062d1dab39fcf780acfd18df16bf1385
 ---
@@ -18,7 +18,7 @@ Change-Id: I47f375be062d1dab39fcf780acfd18df16bf1385
  create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
 
 diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
-index cf52eb3ab060..3e37d33d838e 100644
+index cf52eb3ab0602..3e37d33d838e4 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
 +++ b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
 @@ -215,7 +215,7 @@ public class MobileMappings {
@@ -31,7 +31,7 @@ index cf52eb3ab060..3e37d33d838e 100644
          public boolean hideLtePlus = false;
          public boolean hspaDataDistinguishable;
 diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java b/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
-index 615c05addd14..5914f43a443c 100644
+index 615c05addd14c..5914f43a443c3 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
 +++ b/packages/SettingsLib/src/com/android/settingslib/mobile/TelephonyIcons.java
 @@ -136,13 +136,13 @@ public class TelephonyIcons {
@@ -51,7 +51,7 @@ index 615c05addd14..5914f43a443c 100644
  
      public static final MobileIconGroup FOUR_G_LTE = new MobileIconGroup(
 diff --git a/packages/SystemUI/res/drawable/ic_qs_nfc.xml b/packages/SystemUI/res/drawable/ic_qs_nfc.xml
-index 2c080964b48e..3202d8d47693 100644
+index 2c080964b48ec..3202d8d47693c 100644
 --- a/packages/SystemUI/res/drawable/ic_qs_nfc.xml
 +++ b/packages/SystemUI/res/drawable/ic_qs_nfc.xml
 @@ -1,31 +1,28 @@
@@ -109,7 +109,7 @@ index 2c080964b48e..3202d8d47693 100644
  </vector>
 diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
 new file mode 100644
-index 000000000000..55da075f6b48
+index 0000000000000..55da075f6b48f
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
 @@ -0,0 +1,29 @@
@@ -144,7 +144,7 @@ index 000000000000..55da075f6b48
 +</vector>
 diff --git a/packages/SystemUI/res/drawable/stat_sys_nfc.xml b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
 new file mode 100644
-index 000000000000..08d8892ab035
+index 0000000000000..08d8892ab0354
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
 @@ -0,0 +1,29 @@
@@ -178,7 +178,7 @@ index 000000000000..08d8892ab035
 +    </vector>
 +</inset>
 diff --git a/packages/SystemUI/res/values/strings.xml b/packages/SystemUI/res/values/strings.xml
-index 20075caa7c10..a90c87680115 100644
+index 20075caa7c102..a90c876801159 100644
 --- a/packages/SystemUI/res/values/strings.xml
 +++ b/packages/SystemUI/res/values/strings.xml
 @@ -1117,6 +1117,7 @@
@@ -190,7 +190,7 @@ index 20075caa7c10..a90c87680115 100644
      <!-- QuickSettings: NFC (off) [CHAR LIMIT=NONE] -->
      <string name="quick_settings_nfc_off">NFC is disabled</string>
 diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
-index 0c6a850b7fe9..7adc12d01e79 100644
+index bed1f269b7892..aac3f4d5d459f 100644
 --- a/packages/SystemUI/res/xml/status_bar_prefs.xml
 +++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
 @@ -57,6 +57,11 @@
@@ -206,7 +206,7 @@ index 0c6a850b7fe9..7adc12d01e79 100644
          android:icon="@drawable/ic_statusbar_camera"
          android:key="cameratoggle"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
-index 5ced9243cb10..2f2749cf1934 100644
+index 5ced9243cb10e..2f2749cf19344 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
 @@ -33,6 +33,7 @@ import android.content.pm.PackageManager;

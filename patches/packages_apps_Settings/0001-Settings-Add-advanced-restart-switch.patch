@@ -1,0 +1,50 @@
+From 42f4f6d6404a4416be894226b8a6b0b9facfd0db Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Mon, 19 Sep 2016 13:51:17 -0700
+Subject: [PATCH] Settings: Add advanced restart switch
+
+Change-Id: I66ee511e43ad36d58cdae8c580ec00cddce11dea
+---
+ res/values/cm_strings.xml       | 8 ++++++++
+ res/xml/power_menu_settings.xml | 6 ++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/res/values/cm_strings.xml b/res/values/cm_strings.xml
+index 290df8a910a1..8e90de87d491 100644
+--- a/res/values/cm_strings.xml
++++ b/res/values/cm_strings.xml
+@@ -20,6 +20,14 @@
+     <!-- Alternative: 1dot1dot1dot1.cloudflare-dns.com -->
+     <string name="private_dns_hostname_cloudflare" translatable="false">one.one.one.one</string>
+ 
++    <!-- Advanced restart options -->
++    <string name="advanced_reboot_title">Advanced restart</string>
++    <string name="advanced_reboot_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++
++    <!-- Android debugging as root -->
++    <string name="adb_enable_root">Rooted debugging</string>
++    <string name="adb_enable_summary_root">Allow running Android debugging as root</string>
++
+     <!-- Black theme for dark mode -->
+     <string name="berry_black_theme_title">Pure black</string>
+     <string name="berry_black_theme_summary">Pure black background for dark theme</string>
+diff --git a/res/xml/power_menu_settings.xml b/res/xml/power_menu_settings.xml
+index bf26f87faec7..e37775937470 100644
+--- a/res/xml/power_menu_settings.xml
++++ b/res/xml/power_menu_settings.xml
+@@ -26,6 +26,12 @@
+         settings:lottie_rawRes="@raw/lottie_long_press_power_for_power_menu"
+         settings:controller="com.android.settings.gestures.LongPressPowerIllustrationPreferenceController"/>
+ 
++    <lineageos.preference.LineageSecureSettingSwitchPreference
++        android:key="advanced_reboot"
++        android:title="@string/advanced_reboot_title"
++        android:summary="@string/advanced_reboot_summary"
++        android:defaultValue="false" />
++
+     <PreferenceCategory
+         android:key="gesture_power_menu_long_press_category"
+         android:title="@string/power_menu_long_press_category_title">
+-- 
+2.43.0
+

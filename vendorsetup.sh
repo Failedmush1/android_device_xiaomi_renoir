@@ -59,3 +59,14 @@ else
     rm -rf vendor/gapps
     unset WITH_GMS
 fi
+
+# Apply custom patches if not already applied
+if [ -f "frameworks/base/core/java/android/os/IPowerManager.aidl" ]; then
+    if ! grep -q "rebootCustom" frameworks/base/core/java/android/os/IPowerManager.aidl; then
+        echo -e "${color}Applying custom Renoir patches...${endcolor}"
+        $(pwd)/device/xiaomi/renoir/apply_patches.sh
+    else
+        echo -e "${color}Custom Renoir patches already applied.${endcolor}"
+    fi
+fi
+
