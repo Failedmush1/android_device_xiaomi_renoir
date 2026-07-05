@@ -18,9 +18,6 @@ apply_patches() {
 # Apply frameworks/base patches
 apply_patches "frameworks/base" "$RENOIR_PATCHES/frameworks_base"
 
-# Apply frameworks/opt/telephony patches
-apply_patches "frameworks/opt/telephony" "$RENOIR_PATCHES/frameworks_opt_telephony"
-
 # Apply packages/apps/Settings patches
 apply_patches "packages/apps/Settings" "$RENOIR_PATCHES/packages_apps_Settings"
 
