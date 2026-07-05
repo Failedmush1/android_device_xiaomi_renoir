@@ -1,0 +1,25 @@
+From 9b1ebb3a9e41f1bf181d012c3d7b1ab317b4e3a5 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sun, 5 Jul 2026 06:47:54 +0000
+Subject: [PATCH 5/5] fw/b: Remove unimplemented setKeyboardVisibility from
+ IPowerManager.aidl
+
+Change-Id: If02c2503b4dbac93df8de81358b0cd92988c897f
+---
+ core/java/android/os/IPowerManager.aidl | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/core/java/android/os/IPowerManager.aidl b/core/java/android/os/IPowerManager.aidl
+index 1921897638214..5f72b2d11cdb6 100644
+--- a/core/java/android/os/IPowerManager.aidl
++++ b/core/java/android/os/IPowerManager.aidl
+@@ -186,6 +186,5 @@ interface IPowerManager
+ 
+     // Lineage custom API
+     void rebootCustom(boolean confirm, String reason, boolean wait);
+-    void setKeyboardVisibility(boolean visible);
+     void wakeUpWithProximityCheck(long time, int reason, String details, String opPackageName, int displayId);
+ }
+-- 
+2.43.0
+
