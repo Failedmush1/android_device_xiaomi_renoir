@@ -1,7 +1,7 @@
 From ee8fe1470c74d6f324e5fa6fb9fc820d27a0d4a4 Mon Sep 17 00:00:00 2001
 From: Arindam Bhattacharjee <abhattacharjee717@gmail.com>
 Date: Wed, 19 Nov 2025 19:35:38 +0000
-Subject: [PATCH 2/2] Introduce `Force LTE_CA` override on per subscription
+Subject: [PATCH 2/3] Introduce `Force LTE_CA` override on per subscription
  basis [3/3]
 
 Patches required in:
