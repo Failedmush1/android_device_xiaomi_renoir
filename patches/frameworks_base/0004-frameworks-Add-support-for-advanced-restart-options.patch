@@ -1,7 +1,7 @@
 From ef3d80572842371b01b3061ce4476b692cf93daa Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mkbestas@lineageos.org>
 Date: Sun, 21 Jan 2018 00:22:10 +0200
-Subject: [PATCH 4/4] frameworks: Add support for advanced restart options
+Subject: [PATCH 4/5] frameworks: Add support for advanced restart options
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

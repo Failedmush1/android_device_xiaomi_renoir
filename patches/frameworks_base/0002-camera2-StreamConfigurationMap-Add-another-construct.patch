@@ -1,7 +1,7 @@
 From c25c1ee1e88aac0391eeca2bf717149eba384dad Mon Sep 17 00:00:00 2001
 From: Pranav Vashi <neobuddy89@gmail.com>
 Date: Fri, 28 Mar 2025 00:12:49 +0530
-Subject: [PATCH 2/4] camera2: StreamConfigurationMap: Add another constructor
+Subject: [PATCH 2/5] camera2: StreamConfigurationMap: Add another constructor
  for MiuiCamera on A15 QPR2
 
 Log: https://katb.in/qahabudoruq/raw

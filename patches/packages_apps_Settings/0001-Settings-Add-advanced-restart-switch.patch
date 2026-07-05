@@ -1,7 +1,7 @@
 From 42f4f6d6404a4416be894226b8a6b0b9facfd0db Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Mon, 19 Sep 2016 13:51:17 -0700
-Subject: [PATCH] Settings: Add advanced restart switch
+Subject: [PATCH 1/2] Settings: Add advanced restart switch
 
 Change-Id: I66ee511e43ad36d58cdae8c580ec00cddce11dea
 ---

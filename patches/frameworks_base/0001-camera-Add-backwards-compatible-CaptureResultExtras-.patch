@@ -1,7 +1,7 @@
 From dc071ee010ae1a44dfe0c7b50fc80ab022928649 Mon Sep 17 00:00:00 2001
 From: Adithya R <gh0strider.2k18.reborn@gmail.com>
 Date: Sat, 24 Dec 2022 22:03:58 +0530
-Subject: [PATCH 1/4] camera: Add backwards-compatible CaptureResultExtras
+Subject: [PATCH 1/5] camera: Add backwards-compatible CaptureResultExtras
  constructor
 
 Commit e16fed20 added readout timestamp parameters which

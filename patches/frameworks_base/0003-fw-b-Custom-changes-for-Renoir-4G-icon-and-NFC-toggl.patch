@@ -1,7 +1,7 @@
 From c4f6494afd5b17224891e80eaf145ca6875d3138 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
 Date: Wed, 1 Jul 2026 00:29:17 +0000
-Subject: [PATCH 3/4] fw/b: Custom changes for Renoir: 4G icon and NFC toggle
+Subject: [PATCH 3/5] fw/b: Custom changes for Renoir: 4G icon and NFC toggle
 
 Change-Id: I47f375be062d1dab39fcf780acfd18df16bf1385
 ---
