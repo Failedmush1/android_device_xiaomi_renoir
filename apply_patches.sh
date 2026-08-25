@@ -27,6 +27,8 @@ if [ -d "$PATCH_DIR" ]; then
                 TARGET_REPO="frameworks/av"
             elif [[ "$TARGET_FILE" == services/surfaceflinger/* ]]; then
                 TARGET_REPO="frameworks/native"
+            elif [[ "$TARGET_FILE" == BoardConfigCommon.mk || "$TARGET_FILE" == common.mk || "$TARGET_FILE" == hidl/manifest_lahaina.xml ]]; then
+                TARGET_REPO="device/xiaomi/sm8350-common"
             else
                 # Fallback: try to guess or use frameworks/av as default
                 TARGET_REPO="frameworks/av"
