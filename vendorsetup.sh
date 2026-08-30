@@ -12,7 +12,7 @@ apply_patches() {
             if patch -p1 --dry-run -R -d "$target_dir" < "$patch" > /dev/null 2>&1; then
                 echo "Patch $(basename "$patch") already applied to $target_dir, skipping."
             else
-                if git -C "$target_dir" am "../../../$patch" > /dev/null 2>&1; then
+                if git -C "$target_dir" am "$PWD/$patch" > /dev/null 2>&1; then
                     echo "Successfully applied $(basename "$patch") to $target_dir"
                 else
                     echo "Failed to apply $(basename "$patch") to $target_dir - check for conflicts!"
