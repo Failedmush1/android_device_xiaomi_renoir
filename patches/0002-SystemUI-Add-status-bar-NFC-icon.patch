@@ -1,32 +1,116 @@
-From 28f422f188acfed8d1e70620389078a504be3370 Mon Sep 17 00:00:00 2001
+From a8517c3816a01dd4ce87db02f6e75064f277956d Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
-Date: Wed, 1 Jul 2026 00:29:17 +0000
+Date: Fri, 4 Sep 2026 22:10:01 +0000
 Subject: [PATCH] fw/b: Custom changes for Renoir: NFC toggle
 
-Change-Id: I47f375be062d1dab39fcf780acfd18df16bf1385
+Change-Id: Ida60067a2bbec634bcaa0eb11a324fc9759d0c40
 ---
- .../SystemUI/res/xml/status_bar_prefs.xml     |  5 +++
- .../statusbar/phone/PhoneStatusBarPolicy.java | 23 ++++++++++
- 2 files changed, 28 insertions(+)
+ .../res/drawable/ic_statusbar_nfc.xml         | 10 ++++++++
+ .../SystemUI/res/drawable/stat_sys_nfc.xml    | 25 +++++++++++++++++++
+ packages/SystemUI/res/values/cm_strings.xml   |  5 ++++
+ .../SystemUI/res/xml/status_bar_prefs.xml     | 11 ++++++++
+ .../statusbar/phone/PhoneStatusBarPolicy.java | 23 +++++++++++++++++
+ 5 files changed, 74 insertions(+)
+ create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
 
+diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+new file mode 100644
+index 000000000000..16817c2cc69d
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+@@ -0,0 +1,10 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++  <path
++      android:fillColor="#FFFFFFFF"
++      android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/stat_sys_nfc.xml b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+new file mode 100644
+index 000000000000..09b4a29e6642
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2016 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="17dp"
++    android:height="17dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
+index 43603f08061f..30caa9bf66d8 100644
+--- a/packages/SystemUI/res/values/cm_strings.xml
++++ b/packages/SystemUI/res/values/cm_strings.xml
+@@ -116,6 +116,11 @@
+     <string name="status_bar_firewall">Firewall</string>
+     <string name="status_bar_firewall_slot" translatable="false">firewall</string>
+ 
++    <string name="status_bar_ims">VoLTE/VoWiFi</string>
++
++    <!-- Name of the NFC status bar icon. -->
++    <string name="status_bar_nfc">NFC</string>
++
+     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
+     <string name="screenshot_delete_label">Delete</string>
+     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
 diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
-index 28cb48ed7d88..98a0cda81180 100644
+index 865f84473375..ec4633d9d323 100644
 --- a/packages/SystemUI/res/xml/status_bar_prefs.xml
 +++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
-@@ -107,3 +107,8 @@
+@@ -33,6 +33,12 @@
+         android:key="firewall"
          android:title="@string/status_bar_firewall" />
  
 +    <!-- NFC -->
 +    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_nfc"
 +        android:key="nfc"
 +        android:title="@string/status_bar_nfc" />
 +
      <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_work"
+         android:key="managed_profile"
+@@ -81,6 +87,11 @@
+         android:key="volume"
+         android:title="@string/volume_ringer_status_vibrate" />
+ 
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_volte"
++        android:key="ims"
++        android:title="@string/status_bar_ims" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_wifi"
+         android:key="wifi"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
-index da3b965f3a09..9847e682eeb2 100644
+index 2fae4c7e7ca9..6460ae498483 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
-@@ -35,6 +35,7 @@ import android.content.res.Resources;
+@@ -34,6 +34,7 @@ import android.content.res.Resources;
  import android.media.AudioManager;
  import android.net.ConnectivityManager;
  import android.net.INetworkPolicyListener;
@@ -34,7 +118,7 @@ index da3b965f3a09..9847e682eeb2 100644
  import android.net.Network;
  import android.net.NetworkCapabilities;
  import android.net.NetworkPolicyManager;
-@@ -134,6 +135,7 @@ public class PhoneStatusBarPolicy
+@@ -132,6 +133,7 @@ public class PhoneStatusBarPolicy
      private final String mSlotSensorsOff;
      private final String mSlotScreenRecord;
      private final String mSlotFirewall;
@@ -42,7 +126,7 @@ index da3b965f3a09..9847e682eeb2 100644
      private final int mDisplayId;
      private final SharedPreferences mSharedPreferences;
      private final DateFormatUtil mDateFormatUtil;
-@@ -144,6 +146,7 @@ public class PhoneStatusBarPolicy
+@@ -139,6 +141,7 @@ public class PhoneStatusBarPolicy
  
      private final Context mContext;
      private final Handler mHandler;
@@ -50,7 +134,7 @@ index da3b965f3a09..9847e682eeb2 100644
      private final CastController mCast;
      private final HotspotController mHotspot;
      private final NextAlarmController mNextAlarmController;
-@@ -259,6 +262,7 @@ public class PhoneStatusBarPolicy
+@@ -252,6 +255,7 @@ public class PhoneStatusBarPolicy
          mSlotScreenRecord = resources.getString(
                  com.android.internal.R.string.status_bar_screen_record);
          mSlotFirewall = resources.getString(R.string.status_bar_firewall_slot);
@@ -58,7 +142,7 @@ index da3b965f3a09..9847e682eeb2 100644
  
          mDisplayId = displayId;
          mSharedPreferences = sharedPreferences;
-@@ -279,6 +283,7 @@ public class PhoneStatusBarPolicy
+@@ -269,6 +273,7 @@ public class PhoneStatusBarPolicy
          filter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
          filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
          filter.addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED);
@@ -66,7 +150,7 @@ index da3b965f3a09..9847e682eeb2 100644
          mBroadcastDispatcher.registerReceiverWithHandler(mIntentReceiver, filter, mHandler);
          Observer<Integer> observer = ringer -> mHandler.post(this::updateVolumeZen);
  
-@@ -360,6 +365,12 @@ public class PhoneStatusBarPolicy
+@@ -347,6 +352,12 @@ public class PhoneStatusBarPolicy
          mIconController.setIconVisibility(mSlotSensorsOff,
                  mSensorPrivacyController.isSensorPrivacyEnabled());
  
@@ -79,7 +163,7 @@ index da3b965f3a09..9847e682eeb2 100644
          // screen record
          mIconController.setIcon(mSlotScreenRecord, R.drawable.stat_sys_screen_record, null);
          mIconController.setIconVisibility(mSlotScreenRecord, false);
-@@ -777,6 +788,15 @@ public class PhoneStatusBarPolicy
+@@ -774,6 +785,15 @@ public class PhoneStatusBarPolicy
          }
      }
  
@@ -95,7 +179,7 @@ index da3b965f3a09..9847e682eeb2 100644
      @Override
      public void onDataSaverChanged(boolean isDataSaving) {
          mIconController.setIconVisibility(mSlotDataSaver, isDataSaving);
-@@ -835,6 +855,9 @@ public class PhoneStatusBarPolicy
+@@ -859,6 +879,9 @@ public class PhoneStatusBarPolicy
                  case AudioManager.ACTION_HEADSET_PLUG:
                      updateHeadsetPlug(intent);
                      break;
@@ -106,4 +190,5 @@ index da3b965f3a09..9847e682eeb2 100644
          }
      };
 -- 
-2.34.1
+2.43.0
+

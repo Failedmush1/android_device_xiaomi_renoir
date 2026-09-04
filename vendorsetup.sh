@@ -21,3 +21,14 @@ if [ ! -f frameworks/base/.patch_applied_nfc_icon ]; then
 else
     echo "NFC Statusbar Icon patch already applied to frameworks/base."
 fi
+
+# Apply VoLTE & VoWiFi Statusbar Icons patch to frameworks/base
+if [ ! -f frameworks/base/.patch_applied_volte_icon ]; then
+    echo "Applying VoLTE & VoWiFi Statusbar Icons patch to frameworks/base..."
+    cd frameworks/base
+    git apply ../../device/xiaomi/renoir/patches/0003-SystemUI-Introduce-dynamic-VoLTE-VoWiFi-icons.patch
+    touch .patch_applied_volte_icon
+    cd ../..
+else
+    echo "VoLTE & VoWiFi Statusbar Icons patch already applied to frameworks/base."
+fi
