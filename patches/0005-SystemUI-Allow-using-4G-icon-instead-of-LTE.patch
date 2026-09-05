@@ -1,0 +1,73 @@
+From dbf1f4489ec9de70e74b734721b91cae89556715 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sat, 5 Sep 2026 20:49:02 +0000
+Subject: [PATCH] SystemUI: Allow using 4G icon instead of LTE
+
+* Moved logic out of MobileSignalController to avoid
+  the missing MobileIconsInteractor issue in A13.
+
+Change-Id: I14a6223917e7174493e79f64de7518832193cf8b
+---
+ .../android/settingslib/mobile/MobileMappings.java  |  5 +++--
+ .../connectivity/NetworkControllerImpl.java         | 13 ++++++++++++-
+ 2 files changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+index 840c9364de32a..338a8418d5257 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
++++ b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+@@ -240,8 +240,9 @@ public class MobileMappings {
+             if (b != null) {
+                 config.alwaysShowDataRatIcon = b.getBoolean(
+                         CarrierConfigManager.KEY_ALWAYS_SHOW_DATA_RAT_ICON_BOOL);
+-                config.show4gForLte = b.getBoolean(
+-                        CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL);
++                config.show4gForLte = android.provider.Settings.System.getInt(
++                        context.getContentResolver(), "show_fourg_icon",
++                        b.getBoolean(CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL) ? 1 : 0) == 1;
+                 config.show4glteForLte = b.getBoolean(
+                         CarrierConfigManager.KEY_SHOW_4GLTE_FOR_LTE_DATA_ICON_BOOL);
+                 config.show4gFor3g = b.getBoolean(
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
+index 6e74542691a50..a639538bd9b5f 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
+@@ -104,9 +104,11 @@ import javax.inject.Inject;
+ import kotlin.Unit;
+ 
+ /** Platform implementation of the network controller. **/
++import com.android.systemui.tuner.TunerService;
++
+ @SysUISingleton
+ public class NetworkControllerImpl extends BroadcastReceiver
+-        implements NetworkController, DemoMode, DataUsageController.NetworkNameProvider, Dumpable {
++        implements NetworkController, DemoMode, DataUsageController.NetworkNameProvider, Dumpable, TunerService.Tunable {
+     // debug
+     static final String TAG = "NetworkController";
+     static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+@@ -273,6 +275,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
+                 handler,
+                 dumpManager,
+                 logBuffer);
++        Dependency.get(TunerService.class).addTunable(this, "show_fourg_icon");
+         mReceiverHandler.post(mRegisterListeners);
+         mInternetDialogFactory = internetDialogFactory;
+     }
+@@ -494,6 +497,14 @@ public class NetworkControllerImpl extends BroadcastReceiver
+         return mDataSaverController;
+     }
+ 
++    @Override
++    public void onTuningChanged(String key, String newValue) {
++        if ("show_fourg_icon".equals(key)) {
++            mConfig = Config.readConfig(mContext);
++            mReceiverHandler.post(this::handleConfigurationChanged);
++        }
++    }
++
+     @VisibleForTesting
+     void registerListeners() {
+         for (int i = 0; i < mMobileSignalControllers.size(); i++) {
+-- 
+2.43.0
+
