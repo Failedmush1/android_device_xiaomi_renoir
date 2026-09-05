@@ -38,3 +38,29 @@ else
     echo "camera sepolicy patch is already applied."
 fi
 
+# Apply crDroid apns-conf.xml patch
+if ! grep -q "Copyright 2016-2024 The LineageOS Project" vendor/derp/prebuilt/common/etc/apns-conf.xml; then
+    echo "Applying crDroid apns-conf.xml patch..."
+    patch -d vendor/derp -p1 < device/xiaomi/renoir/0001-prebuilt-Update-apns-conf.xml-from-crDroid.patch
+else
+    echo "crDroid apns-conf.xml patch is already applied."
+fi
+
+# Apply Show 4G instead of LTE tuner setting patch to frameworks/base
+if [ ! -f frameworks/base/.patch_applied_show_fourg_tuner ]; then
+    echo "Applying Show 4G instead of LTE tuner setting patch to frameworks/base..."
+    cd frameworks/base
+    git apply ../../device/xiaomi/renoir/patches/0004-SystemUI-Add-Show-4G-instead-of-LTE-tuner-setting.patch || true
+    touch .patch_applied_show_fourg_tuner
+    cd ../..
+else
+    echo "Show 4G instead of LTE tuner setting patch already applied to frameworks/base."
+fi
+
+if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
+    echo "Applying hardware/lineage/compat libstagefright_foundation-v33 patch..."
+    patch -d hardware/lineage/compat -p1 < device/xiaomi/renoir/0001-compat-Provide-libstagefright_foundation-v33.patch
+else
+    echo "hardware/lineage/compat libstagefright_foundation-v33 patch is already applied or repo missing."
+fi
+
