@@ -22,6 +22,14 @@ fi
 echo "Removing prebuilt vendor.qti.hardware.fm@1.0.so from vendor/xiaomi/sm8350-common..."
 sed -i '/vendor\.qti\.hardware\.fm@1\.0\.so/d' vendor/xiaomi/sm8350-common/sm8350-common-vendor.mk
 
+# Apply vendor/derp WITH_GMS override patch
+if ! grep -q "ifeq (\$(WITH_GMS),true)" vendor/derp/config/common.mk; then
+    echo "Applying vendor/derp WITH_GMS override patch..."
+    patch -d vendor/derp -p1 < device/xiaomi/renoir/0001-config-Allow-overriding-WITH_GMS-flag.patch
+else
+    echo "vendor/derp WITH_GMS override patch is already applied."
+fi
+
 # Apply camera sepolicy patch
 if ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te; then
     echo "Applying camera sepolicy patch..."
