@@ -41,3 +41,11 @@ if ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_def
 else
     echo "camera sepolicy patch is already applied."
 fi
+
+# Apply hardware/lineage/compat patch
+if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
+    echo "Applying hardware/lineage/compat libstagefright_foundation-v33 patch..."
+    patch -d hardware/lineage/compat -p1 < device/xiaomi/renoir/patches/0007-compat-Provide-libstagefright_foundation-v33.patch
+else
+    echo "hardware/lineage/compat libstagefright_foundation-v33 patch is already applied or repo missing."
+fi
