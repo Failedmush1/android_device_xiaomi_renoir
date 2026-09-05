@@ -1,4 +1,4 @@
-From dbf1f4489ec9de70e74b734721b91cae89556715 Mon Sep 17 00:00:00 2001
+From 0178e5887258fa0cc2732af6155722aac36dede0 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
 Date: Sat, 5 Sep 2026 20:49:02 +0000
 Subject: [PATCH] SystemUI: Allow using 4G icon instead of LTE
@@ -8,9 +8,9 @@ Subject: [PATCH] SystemUI: Allow using 4G icon instead of LTE
 
 Change-Id: I14a6223917e7174493e79f64de7518832193cf8b
 ---
- .../android/settingslib/mobile/MobileMappings.java  |  5 +++--
- .../connectivity/NetworkControllerImpl.java         | 13 ++++++++++++-
- 2 files changed, 15 insertions(+), 3 deletions(-)
+ .../android/settingslib/mobile/MobileMappings.java |  5 +++--
+ .../connectivity/NetworkControllerImpl.java        | 14 +++++++++++++-
+ 2 files changed, 16 insertions(+), 3 deletions(-)
 
 diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
 index 840c9364de32a..338a8418d5257 100644
@@ -29,10 +29,18 @@ index 840c9364de32a..338a8418d5257 100644
                          CarrierConfigManager.KEY_SHOW_4GLTE_FOR_LTE_DATA_ICON_BOOL);
                  config.show4gFor3g = b.getBoolean(
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
-index 6e74542691a50..a639538bd9b5f 100644
+index 6e74542691a50..c7c775f1876da 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
-@@ -104,9 +104,11 @@ import javax.inject.Inject;
+@@ -64,6 +64,7 @@ import com.android.settingslib.mobile.MobileMappings.Config;
+ import com.android.settingslib.mobile.MobileStatusTracker.SubscriptionDefaults;
+ import com.android.settingslib.mobile.TelephonyIcons;
+ import com.android.settingslib.net.DataUsageController;
++import com.android.systemui.Dependency;
+ import com.android.systemui.Dumpable;
+ import com.android.systemui.R;
+ import com.android.systemui.broadcast.BroadcastDispatcher;
+@@ -104,9 +105,11 @@ import javax.inject.Inject;
  import kotlin.Unit;
  
  /** Platform implementation of the network controller. **/
@@ -45,7 +53,7 @@ index 6e74542691a50..a639538bd9b5f 100644
      // debug
      static final String TAG = "NetworkController";
      static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
-@@ -273,6 +275,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
+@@ -273,6 +276,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
                  handler,
                  dumpManager,
                  logBuffer);
@@ -53,7 +61,7 @@ index 6e74542691a50..a639538bd9b5f 100644
          mReceiverHandler.post(mRegisterListeners);
          mInternetDialogFactory = internetDialogFactory;
      }
-@@ -494,6 +497,14 @@ public class NetworkControllerImpl extends BroadcastReceiver
+@@ -494,6 +498,14 @@ public class NetworkControllerImpl extends BroadcastReceiver
          return mDataSaverController;
      }
  
