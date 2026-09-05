@@ -1,16 +1,16 @@
-From a8517c3816a01dd4ce87db02f6e75064f277956d Mon Sep 17 00:00:00 2001
+From 2bec46bfdea6c1562f4440140332e5bd742d0691 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
-Date: Fri, 4 Sep 2026 22:10:01 +0000
+Date: Sat, 5 Sep 2026 02:06:20 +0000
 Subject: [PATCH] fw/b: Custom changes for Renoir: NFC toggle
 
-Change-Id: Ida60067a2bbec634bcaa0eb11a324fc9759d0c40
+Change-Id: I510f8155fb20e98f3cd2914c96815ea87e34ceff
 ---
  .../res/drawable/ic_statusbar_nfc.xml         | 10 ++++++++
  .../SystemUI/res/drawable/stat_sys_nfc.xml    | 25 +++++++++++++++++++
- packages/SystemUI/res/values/cm_strings.xml   |  5 ++++
- .../SystemUI/res/xml/status_bar_prefs.xml     | 11 ++++++++
+ packages/SystemUI/res/values/cm_strings.xml   |  3 +++
+ .../SystemUI/res/xml/status_bar_prefs.xml     |  6 +++++
  .../statusbar/phone/PhoneStatusBarPolicy.java | 23 +++++++++++++++++
- 5 files changed, 74 insertions(+)
+ 5 files changed, 67 insertions(+)
  create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
  create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
 
@@ -62,15 +62,13 @@ index 000000000000..09b4a29e6642
 +        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
 +</vector>
 diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
-index 43603f08061f..30caa9bf66d8 100644
+index 43603f08061f..d35784c361da 100644
 --- a/packages/SystemUI/res/values/cm_strings.xml
 +++ b/packages/SystemUI/res/values/cm_strings.xml
-@@ -116,6 +116,11 @@
+@@ -116,6 +116,9 @@
      <string name="status_bar_firewall">Firewall</string>
      <string name="status_bar_firewall_slot" translatable="false">firewall</string>
  
-+    <string name="status_bar_ims">VoLTE/VoWiFi</string>
-+
 +    <!-- Name of the NFC status bar icon. -->
 +    <string name="status_bar_nfc">NFC</string>
 +
@@ -78,7 +76,7 @@ index 43603f08061f..30caa9bf66d8 100644
      <string name="screenshot_delete_label">Delete</string>
      <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
 diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
-index 865f84473375..ec4633d9d323 100644
+index 865f84473375..763739e46035 100644
 --- a/packages/SystemUI/res/xml/status_bar_prefs.xml
 +++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
 @@ -33,6 +33,12 @@
@@ -94,18 +92,6 @@ index 865f84473375..ec4633d9d323 100644
      <com.android.systemui.tuner.StatusBarSwitch
          android:icon="@drawable/ic_statusbar_work"
          android:key="managed_profile"
-@@ -81,6 +87,11 @@
-         android:key="volume"
-         android:title="@string/volume_ringer_status_vibrate" />
- 
-+    <com.android.systemui.tuner.StatusBarSwitch
-+        android:icon="@drawable/ic_statusbar_volte"
-+        android:key="ims"
-+        android:title="@string/status_bar_ims" />
-+
-     <com.android.systemui.tuner.StatusBarSwitch
-         android:icon="@drawable/ic_statusbar_wifi"
-         android:key="wifi"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
 index 2fae4c7e7ca9..6460ae498483 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java

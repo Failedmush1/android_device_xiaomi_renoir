@@ -1,0 +1,45 @@
+From 5c0689a79798463a1778ee70fe1d85c7e0b1b2ec Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sat, 5 Sep 2026 02:06:55 +0000
+Subject: [PATCH] SystemUI: Add 'Show 4G instead of LTE' tuner setting
+
+Change-Id: If10b88134007793b6545deed541535beda768ef6
+---
+ packages/SystemUI/res/values/cm_strings.xml    | 3 +++
+ packages/SystemUI/res/xml/status_bar_prefs.xml | 6 ++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
+index 83dd2b1dfc44..a0db1b4970aa 100644
+--- a/packages/SystemUI/res/values/cm_strings.xml
++++ b/packages/SystemUI/res/values/cm_strings.xml
+@@ -121,6 +121,9 @@
+ 
+     <string name="status_bar_ims">VoLTE/VoWiFi</string>
+ 
++    <!-- Show 4G instead of LTE -->
++    <string name="status_bar_show_fourg">Show 4G instead of LTE</string>
++
+     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
+     <string name="screenshot_delete_label">Delete</string>
+     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index ec4633d9d323..60057688e53a 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -39,6 +39,12 @@
+         android:key="nfc"
+         android:title="@string/status_bar_nfc" />
+ 
++    <!-- Show 4G instead of LTE -->
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_mobile_network"
++        android:key="show_fourg_icon"
++        android:title="@string/status_bar_show_fourg" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_work"
+         android:key="managed_profile"
+-- 
+2.43.0
+

@@ -32,3 +32,14 @@ if [ ! -f frameworks/base/.patch_applied_volte_icon ]; then
 else
     echo "VoLTE & VoWiFi Statusbar Icons patch already applied to frameworks/base."
 fi
+
+# Apply Show 4G instead of LTE tuner setting patch to frameworks/base
+if [ ! -f frameworks/base/.patch_applied_show_fourg_tuner ]; then
+    echo "Applying Show 4G instead of LTE tuner setting patch to frameworks/base..."
+    cd frameworks/base
+    git apply ../../device/xiaomi/renoir/patches/0004-SystemUI-Add-Show-4G-instead-of-LTE-tuner-setting.patch
+    touch .patch_applied_show_fourg_tuner
+    cd ../..
+else
+    echo "Show 4G instead of LTE tuner setting patch already applied to frameworks/base."
+fi

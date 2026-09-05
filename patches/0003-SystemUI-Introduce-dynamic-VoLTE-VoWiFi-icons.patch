@@ -1,9 +1,9 @@
-From d57d69c0c9524178b8cc6f2fc3d80e28f1dc1fb9 Mon Sep 17 00:00:00 2001
+From 1845d6f71db801293dfee644fc4c62e6dee87e80 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
-Date: Fri, 4 Sep 2026 22:10:17 +0000
+Date: Sat, 5 Sep 2026 02:06:37 +0000
 Subject: [PATCH] SystemUI: Introduce dynamic VoLTE & VoWiFi icons
 
-Change-Id: Ia818dc07bc2ab1c59c1aaa408a4808816a045861
+Change-Id: If2508c455dc10c657314cf635481d9261b795a66
 ---
  core/res/res/values/config.xml                |   2 +
  core/res/res/values/symbols.xml               |   1 +
@@ -20,6 +20,8 @@ Change-Id: Ia818dc07bc2ab1c59c1aaa408a4808816a045861
  .../res/drawable/stat_sys_vowifi_slot12.xml   |  18 ++
  .../res/drawable/stat_sys_vowifi_slot2.xml    |  18 ++
  .../res/layout/status_bar_ims_group.xml       |  45 ++++
+ packages/SystemUI/res/values/cm_strings.xml   |   2 +
+ .../SystemUI/res/xml/status_bar_prefs.xml     |   5 +
  .../MediaProjectionAppSelectorComponent.kt    |   7 +-
  .../systemui/statusbar/StatusBarImsView.java  | 218 ++++++++++++++++++
  .../connectivity/CallbackHandler.java         |  11 +
@@ -32,7 +34,7 @@ Change-Id: Ia818dc07bc2ab1c59c1aaa408a4808816a045861
  .../statusbar/phone/StatusBarIconHolder.java  |  27 ++-
  .../phone/StatusBarSignalPolicy.java          |  19 +-
  packages/SystemUI/tests/Android.bp            |   1 +
- 27 files changed, 941 insertions(+), 3 deletions(-)
+ 29 files changed, 948 insertions(+), 3 deletions(-)
  create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_volte.xml
  create mode 100644 packages/SystemUI/res/drawable/ic_volte.xml
  create mode 100644 packages/SystemUI/res/drawable/ic_volte_no_voice.xml
@@ -485,6 +487,35 @@ index 000000000000..eb29f02b42b1
 +            android:visibility="gone" />
 +    </com.android.keyguard.AlphaOptimizedLinearLayout>
 +</com.android.systemui.statusbar.StatusBarImsView>
+diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
+index d35784c361da..83dd2b1dfc44 100644
+--- a/packages/SystemUI/res/values/cm_strings.xml
++++ b/packages/SystemUI/res/values/cm_strings.xml
+@@ -119,6 +119,8 @@
+     <!-- Name of the NFC status bar icon. -->
+     <string name="status_bar_nfc">NFC</string>
+ 
++    <string name="status_bar_ims">VoLTE/VoWiFi</string>
++
+     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
+     <string name="screenshot_delete_label">Delete</string>
+     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index 763739e46035..ec4633d9d323 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -87,6 +87,11 @@
+         android:key="volume"
+         android:title="@string/volume_ringer_status_vibrate" />
+ 
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_volte"
++        android:key="ims"
++        android:title="@string/status_bar_ims" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_wifi"
+         android:key="wifi"
 diff --git a/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt b/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt
 index 3088d8b58023..1a0eb381a029 100644
 --- a/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt
