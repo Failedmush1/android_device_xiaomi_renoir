@@ -1,0 +1,25 @@
+From da0f45c84ea22ab01ae3233a7f8af2105901eb06 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sat, 5 Sep 2026 06:47:26 +0000
+Subject: [PATCH] sm8350-common: Use DerpFest device framework matrix
+
+---
+ BoardConfigCommon.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/BoardConfigCommon.mk b/BoardConfigCommon.mk
+index dc94e8a..c1f1478 100644
+--- a/BoardConfigCommon.mk
++++ b/BoardConfigCommon.mk
+@@ -70,7 +70,7 @@ DEVICE_MATRIX_FILE := $(COMMON_PATH)/hidl/compatibility_matrix.xml
+ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += \
+     $(COMMON_PATH)/hidl/vendor_framework_compatibility_matrix.xml \
+     $(COMMON_PATH)/hidl/xiaomi_framework_compatibility_matrix.xml \
+-    vendor/lineage/config/device_framework_matrix.xml
++    vendor/derp/config/device_framework_matrix.xml
+ 
+ DEVICE_MANIFEST_FILE := \
+     $(COMMON_PATH)/hidl/manifest_lahaina.xml \
+-- 
+2.43.0
+

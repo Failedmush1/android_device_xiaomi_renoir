@@ -1,0 +1,32 @@
+From 25025a889ab1a5482bf92deb1abaf6b40886eb48 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sat, 5 Sep 2026 06:47:35 +0000
+Subject: [PATCH] config: Use lineage-priv as signed keys
+
+---
+ config/version.mk | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/config/version.mk b/config/version.mk
+index 025e6c7..babc6ae 100644
+--- a/config/version.mk
++++ b/config/version.mk
+@@ -47,11 +47,11 @@ endif
+ 
+ # Signing
+ ifneq (eng,$(TARGET_BUILD_VARIANT))
+-ifneq (,$(wildcard vendor/derp/signing/keys/releasekey.pk8))
+-PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/derp/signing/keys/releasekey
++ifneq (,$(wildcard vendor/lineage-priv/keys/releasekey.pk8))
++PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/lineage-priv/keys/releasekey
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.oem_unlock_supported=1
+ endif
+-ifneq (,$(wildcard vendor/derp/signing/keys/otakey.x509.pem))
+-PRODUCT_OTA_PUBLIC_KEYS := vendor/derp/signing/keys/otakey.x509.pem
++ifneq (,$(wildcard vendor/lineage-priv/keys/otakey.x509.pem))
++PRODUCT_OTA_PUBLIC_KEYS := vendor/lineage-priv/keys/otakey.x509.pem
+ endif
+ endif
+-- 
+2.43.0
+
