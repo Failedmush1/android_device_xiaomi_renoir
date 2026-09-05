@@ -17,3 +17,8 @@ if ! grep -q "vendor/lineage-priv/keys/releasekey.pk8" vendor/derp/config/versio
 else
     echo "vendor/derp signed keys patch is already applied."
 fi
+
+# Fix duplicate fm module error by removing the prebuilt copy
+echo "Removing prebuilt vendor.qti.hardware.fm@1.0.so from vendor/xiaomi/sm8350-common..."
+sed -i '/vendor\.qti\.hardware\.fm@1\.0\.so/d' vendor/xiaomi/sm8350-common/sm8350-common-vendor.mk
+
