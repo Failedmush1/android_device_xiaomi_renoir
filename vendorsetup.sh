@@ -26,8 +26,7 @@ fi
 if [ ! -f frameworks/base/.patch_applied_show_fourg_tuner ]; then
     echo "Applying Show 4G instead of LTE tuner setting patch to frameworks/base..."
     cd frameworks/base
-    git apply ../../device/xiaomi/renoir/patches/0004-SystemUI-Add-Show-4G-instead-of-LTE-tuner-setting.patch || true
-    git apply ../../device/xiaomi/renoir/patches/0005-SystemUI-Allow-using-4G-icon-instead-of-LTE.patch || true
+    git apply ../../device/xiaomi/renoir/patches/0004-telephony-Default-to-showing-4G-icon-instead-of-LTE.patch || true
     touch .patch_applied_show_fourg_tuner
     cd ../..
 else

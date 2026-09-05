@@ -1,46 +1,171 @@
-From 0178e5887258fa0cc2732af6155722aac36dede0 Mon Sep 17 00:00:00 2001
+From 1d89edd6425df8833419ddf675e8afe4a615956a Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
-Date: Sat, 5 Sep 2026 20:49:02 +0000
-Subject: [PATCH] SystemUI: Allow using 4G icon instead of LTE
+Date: Sat, 5 Sep 2026 23:14:22 +0000
+Subject: [PATCH] fw/b: Custom changes for Renoir: NFC toggle
 
-* Moved logic out of MobileSignalController to avoid
-  the missing MobileIconsInteractor issue in A13.
-
-Change-Id: I14a6223917e7174493e79f64de7518832193cf8b
+Change-Id: Iee2f2f82c86bbbde8f4942d73329ca426aa62e1b
 ---
- .../android/settingslib/mobile/MobileMappings.java |  5 +++--
- .../connectivity/NetworkControllerImpl.java        | 14 +++++++++++++-
- 2 files changed, 16 insertions(+), 3 deletions(-)
+ .../settingslib/mobile/MobileMappings.java     |  4 ++--
+ .../SystemUI/res/drawable/ic_statusbar_nfc.xml | 10 ++++++++++
+ .../SystemUI/res/drawable/stat_sys_nfc.xml     | 10 ++++++++++
+ packages/SystemUI/res/values/cm_strings.xml    |  8 ++++++++
+ packages/SystemUI/res/xml/status_bar_prefs.xml | 18 ++++++++++++++++++
+ .../connectivity/NetworkControllerImpl.java    |  7 +++++--
+ .../statusbar/phone/PhoneStatusBarPolicy.java  |  2 ++
+ 7 files changed, 55 insertions(+), 4 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
 
 diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
-index 840c9364de32a..338a8418d5257 100644
+index 338a8418d5257..5e23f6ec4270a 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
 +++ b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
-@@ -240,8 +240,9 @@ public class MobileMappings {
+@@ -240,8 +240,8 @@ public class MobileMappings {
              if (b != null) {
                  config.alwaysShowDataRatIcon = b.getBoolean(
                          CarrierConfigManager.KEY_ALWAYS_SHOW_DATA_RAT_ICON_BOOL);
--                config.show4gForLte = b.getBoolean(
--                        CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL);
-+                config.show4gForLte = android.provider.Settings.System.getInt(
-+                        context.getContentResolver(), "show_fourg_icon",
-+                        b.getBoolean(CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL) ? 1 : 0) == 1;
+-                config.show4gForLte = android.provider.Settings.System.getInt(
+-                        context.getContentResolver(), "show_fourg_icon",
++                config.show4gForLte = android.provider.Settings.Secure.getInt(
++                        context.getContentResolver(), "sysui_tuner_show_fourg_icon",
+                         b.getBoolean(CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL) ? 1 : 0) == 1;
                  config.show4glteForLte = b.getBoolean(
                          CarrierConfigManager.KEY_SHOW_4GLTE_FOR_LTE_DATA_ICON_BOOL);
-                 config.show4gFor3g = b.getBoolean(
+diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+new file mode 100644
+index 0000000000000..16817c2cc69df
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+@@ -0,0 +1,10 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++  <path
++      android:fillColor="#FFFFFFFF"
++      android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/stat_sys_nfc.xml b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+new file mode 100644
+index 0000000000000..55bca4cf87eae
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="17dp"
++    android:height="17dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
+index 43603f08061fb..a0db1b4970aa6 100644
+--- a/packages/SystemUI/res/values/cm_strings.xml
++++ b/packages/SystemUI/res/values/cm_strings.xml
+@@ -116,6 +116,14 @@
+     <string name="status_bar_firewall">Firewall</string>
+     <string name="status_bar_firewall_slot" translatable="false">firewall</string>
+ 
++    <!-- Name of the NFC status bar icon. -->
++    <string name="status_bar_nfc">NFC</string>
++
++    <string name="status_bar_ims">VoLTE/VoWiFi</string>
++
++    <!-- Show 4G instead of LTE -->
++    <string name="status_bar_show_fourg">Show 4G instead of LTE</string>
++
+     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
+     <string name="screenshot_delete_label">Delete</string>
+     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index 865f844733758..b2a86de5f0156 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -33,6 +33,24 @@
+         android:key="firewall"
+         android:title="@string/status_bar_firewall" />
+ 
++    <!-- NFC -->
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_nfc"
++        android:key="nfc"
++        android:title="@string/status_bar_nfc" />
++
++    <!-- VoLTE/VoWiFi -->
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_mobile_network"
++        android:key="ims"
++        android:title="@string/status_bar_ims" />
++
++    <!-- Show 4G instead of LTE -->
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_mobile_network"
++        android:key="show_fourg_icon"
++        android:title="@string/status_bar_show_fourg" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_work"
+         android:key="managed_profile"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
-index 6e74542691a50..c7c775f1876da 100644
+index c7c775f1876da..66ed42ab52001 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
-@@ -64,6 +64,7 @@ import com.android.settingslib.mobile.MobileMappings.Config;
- import com.android.settingslib.mobile.MobileStatusTracker.SubscriptionDefaults;
- import com.android.settingslib.mobile.TelephonyIcons;
- import com.android.settingslib.net.DataUsageController;
-+import com.android.systemui.Dependency;
- import com.android.systemui.Dumpable;
- import com.android.systemui.R;
- import com.android.systemui.broadcast.BroadcastDispatcher;
-@@ -104,9 +105,11 @@ import javax.inject.Inject;
+@@ -276,11 +276,14 @@ public class NetworkControllerImpl extends BroadcastReceiver
+                 handler,
+                 dumpManager,
+                 logBuffer);
+-        Dependency.get(TunerService.class).addTunable(this, "show_fourg_icon");
++        Dependency.get(TunerService.class).addTunable(this, SHOW_FOURG_ICON);
+         mReceiverHandler.post(mRegisterListeners);
+         mInternetDialogFactory = internetDialogFactory;
+     }
+ 
++    private static final String SHOW_FOURG_ICON =
++            "system:" + "show_fourg_icon";
++
+     @VisibleForTesting
+     NetworkControllerImpl(Context context, ConnectivityManager connectivityManager,
+             TelephonyManager telephonyManager,
+@@ -500,7 +503,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
+ 
+     @Override
+     public void onTuningChanged(String key, String newValue) {
+-        if ("show_fourg_icon".equals(key)) {
++        if (SHOW_FOURG_ICON.equals(key)) {
+             mConfig = Config.readConfig(mContext);
+             mReceiverHandler.post(this::handleConfigurationChanged);
+         }
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+index e9099c25fb031..1f6f85c0e6b98 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+@@ -132,6 +132,7 @@ public class PhoneStatusBarPolicy
+     private final String mSlotSensorsOff;
+     private final String mSlotScreenRecord;
+     private final String mSlotFirewall;
++    private final String mSlotNfc;
+     private final int mDisplayId;
+     private final SharedPreferences mSharedPreferences;
+     private final DateFormatUtil mDateFormatUtil;
+@@ -139,6 +140,7 @@ public class PhoneStatusBarPolicy
+ 
+     private final Context mContext;
+     private final Handler mHandler;
++    private NfcAdapter mNfcAdapter;
+     private final CastController mCast;
+     private final HotspotController mHotspot;
+     private final NextAlarmController mNextAlarmController;
+-- 
+2.43.0
+
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java
+@@ -104,9 +104,11 @@ import javax.inject.Inject;
  import kotlin.Unit;
  
  /** Platform implementation of the network controller. **/
@@ -53,11 +178,12 @@ index 6e74542691a50..c7c775f1876da 100644
      // debug
      static final String TAG = "NetworkController";
      static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
-@@ -273,6 +276,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
+@@ -273,6 +275,8 @@ public class NetworkControllerImpl extends BroadcastReceiver
                  handler,
                  dumpManager,
                  logBuffer);
-+        Dependency.get(TunerService.class).addTunable(this, "show_fourg_icon");
++
++        Dependency.get(TunerService.class).addTunable(this, "sysui_tuner_show_fourg_icon");
          mReceiverHandler.post(mRegisterListeners);
          mInternetDialogFactory = internetDialogFactory;
      }
@@ -67,7 +193,7 @@ index 6e74542691a50..c7c775f1876da 100644
  
 +    @Override
 +    public void onTuningChanged(String key, String newValue) {
-+        if ("show_fourg_icon".equals(key)) {
++        if ("sysui_tuner_show_fourg_icon".equals(key)) {
 +            mConfig = Config.readConfig(mContext);
 +            mReceiverHandler.post(this::handleConfigurationChanged);
 +        }
@@ -76,6 +202,3 @@ index 6e74542691a50..c7c775f1876da 100644
      @VisibleForTesting
      void registerListeners() {
          for (int i = 0; i < mMobileSignalControllers.size(); i++) {
--- 
-2.43.0
-
