@@ -22,3 +22,11 @@ fi
 echo "Removing prebuilt vendor.qti.hardware.fm@1.0.so from vendor/xiaomi/sm8350-common..."
 sed -i '/vendor\.qti\.hardware\.fm@1\.0\.so/d' vendor/xiaomi/sm8350-common/sm8350-common-vendor.mk
 
+# Apply camera sepolicy patch
+if ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te; then
+    echo "Applying camera sepolicy patch..."
+    patch -d vendor/xiaomi/camera -p1 < device/xiaomi/renoir/0001-camera-Fix-sepolicy-error-for-platform_app_all.patch
+else
+    echo "camera sepolicy patch is already applied."
+fi
+

@@ -1,0 +1,41 @@
+From e99ec4c490204584f40902ce0b3b876ba2a0b37c Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sat, 5 Sep 2026 08:24:38 +0000
+Subject: [PATCH] camera: Fix sepolicy error for platform_app_all
+
+'platform_app_all' doesn't exist in AOSP/DerpFest sepolicy, switch to 'platform_app'.
+---
+ sepolicy/vendor/hal_camera_default.te |  2 +-
+ sepolicy/vendor/platform_app.te       | 13 ++++++-------
+ 2 files changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/sepolicy/vendor/hal_camera_default.te b/sepolicy/vendor/hal_camera_default.te
+index 3b47c80..a112595 100644
+--- a/sepolicy/vendor/hal_camera_default.te
++++ b/sepolicy/vendor/hal_camera_default.te
+@@ -1 +1 @@
+-binder_call(hal_camera_default, platform_app_all)
++binder_call(hal_camera_default, platform_app)
+diff --git a/sepolicy/vendor/platform_app.te b/sepolicy/vendor/platform_app.te
+index f8c7a09..db8cbf9 100644
+--- a/sepolicy/vendor/platform_app.te
++++ b/sepolicy/vendor/platform_app.te
+@@ -1,9 +1,8 @@
+-allow platform_app_all app_data_file:file execute;
+-allow platform_app_all vendor_hal_camerapostproc_xiaomi_hwservice:hwservice_manager find;
++allow platform_app app_data_file:file execute;
++allow platform_app vendor_hal_camerapostproc_xiaomi_hwservice:hwservice_manager find;
+ 
+-binder_call(platform_app_all, hal_camera_default)
++binder_call(platform_app, hal_camera_default)
+ 
+-get_prop(platform_app_all, vendor_camera_prop)
+-get_prop(platform_app_all, vendor_fp_prop)
+-get_prop(platform_app_all, vendor_display_prop)
+-get_prop(platform_app_all, vendor_camera_sensor_prop)
++get_prop(platform_app, vendor_camera_prop)
++get_prop(platform_app, vendor_fp_prop)
++get_prop(platform_app, vendor_display_prop)
+-- 
+2.43.0
+
