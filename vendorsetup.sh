@@ -33,3 +33,11 @@ if [ ! -f frameworks/base/.patch_applied_show_fourg_tuner ]; then
 else
     echo "Show 4G instead of LTE tuner setting patch already applied to frameworks/base."
 fi
+
+# Apply camera sepolicy patch
+if ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te; then
+    echo "Applying camera sepolicy patch..."
+    patch -d vendor/xiaomi/camera -p1 < device/xiaomi/renoir/patches/0006-camera-Fix-sepolicy-error-for-platform_app_all.patch
+else
+    echo "camera sepolicy patch is already applied."
+fi
