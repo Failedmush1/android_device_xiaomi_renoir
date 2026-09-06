@@ -1,10 +1,56 @@
-commit 4d6ddafd5760fdc401dd9ee898a3e8eae1435364
-Author: Failedmush <anytimewicked@gmail.com>
-Date:   Sun Sep 6 02:24:35 2026 +0000
+From efd227dda5c43856449a4c41a2c8a47871d710b4 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sun, 6 Sep 2026 04:23:03 +0000
+Subject: [PATCH] fw/b: Custom changes for Renoir: VoLTE/VoWiFi toggle
 
-    fw/b: Custom changes for Renoir: VoLTE/VoWiFi toggle
-    
-    Change-Id: I7f9a5c3ef08d3b536a83d071f09a638dd55e37c5
+Change-Id: If6cf1e8898e56616d702f9456ca4c12c4a1681c3
+---
+ core/res/res/values/config.xml                |   2 +
+ core/res/res/values/symbols.xml               |   1 +
+ packages/SystemUI/Android.bp                  |   9 +
+ .../res/drawable/ic_statusbar_volte.xml       |  19 ++
+ packages/SystemUI/res/drawable/ic_volte.xml   |  40 ++++
+ .../res/drawable/ic_volte_no_voice.xml        |  50 ++++
+ .../SystemUI/res/drawable/stat_sys_volte.xml  |  18 ++
+ .../res/drawable/stat_sys_volte_slot1.xml     |  18 ++
+ .../res/drawable/stat_sys_volte_slot12.xml    |  18 ++
+ .../res/drawable/stat_sys_volte_slot2.xml     |  18 ++
+ .../SystemUI/res/drawable/stat_sys_vowifi.xml |  18 ++
+ .../res/drawable/stat_sys_vowifi_slot1.xml    |  18 ++
+ .../res/drawable/stat_sys_vowifi_slot12.xml   |  18 ++
+ .../res/drawable/stat_sys_vowifi_slot2.xml    |  18 ++
+ .../res/layout/status_bar_ims_group.xml       |  45 ++++
+ packages/SystemUI/res/values/cm_strings.xml   |   2 +
+ .../SystemUI/res/xml/status_bar_prefs.xml     |   5 +
+ .../MediaProjectionAppSelectorComponent.kt    |   7 +-
+ .../systemui/statusbar/StatusBarImsView.java  | 218 ++++++++++++++++++
+ .../connectivity/CallbackHandler.java         |  11 +
+ .../connectivity/MobileSignalController.java  | 157 +++++++++++++
+ .../MobileSignalController.java.rej           |  18 ++
+ .../statusbar/connectivity/MobileState.kt     |  16 ++
+ .../connectivity/NetworkControllerImpl.java   |  95 ++++++++
+ .../statusbar/connectivity/SignalCallback.kt  |  37 +++
+ .../statusbar/phone/PhoneStatusBarPolicy.java |   2 +
+ .../phone/StatusBarIconController.java        |  27 +++
+ .../phone/StatusBarIconControllerImpl.java    |  18 ++
+ .../statusbar/phone/StatusBarIconHolder.java  |  27 ++-
+ .../phone/StatusBarSignalPolicy.java          |  19 +-
+ packages/SystemUI/tests/Android.bp            |   1 +
+ 31 files changed, 967 insertions(+), 3 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_volte.xml
+ create mode 100644 packages/SystemUI/res/drawable/ic_volte.xml
+ create mode 100644 packages/SystemUI/res/drawable/ic_volte_no_voice.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_volte.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_volte_slot1.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_volte_slot12.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_volte_slot2.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_vowifi.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_vowifi_slot1.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_vowifi_slot12.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_vowifi_slot2.xml
+ create mode 100644 packages/SystemUI/res/layout/status_bar_ims_group.xml
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/StatusBarImsView.java
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/connectivity/MobileSignalController.java.rej
 
 diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
 index 25744f2de35a9..63e11d8b82b67 100644
@@ -444,6 +490,35 @@ index 0000000000000..eb29f02b42b1e
 +            android:visibility="gone" />
 +    </com.android.keyguard.AlphaOptimizedLinearLayout>
 +</com.android.systemui.statusbar.StatusBarImsView>
+diff --git a/packages/SystemUI/res/values/cm_strings.xml b/packages/SystemUI/res/values/cm_strings.xml
+index d35784c361daf..83dd2b1dfc445 100644
+--- a/packages/SystemUI/res/values/cm_strings.xml
++++ b/packages/SystemUI/res/values/cm_strings.xml
+@@ -119,6 +119,8 @@
+     <!-- Name of the NFC status bar icon. -->
+     <string name="status_bar_nfc">NFC</string>
+ 
++    <string name="status_bar_ims">VoLTE/VoWiFi</string>
++
+     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
+     <string name="screenshot_delete_label">Delete</string>
+     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index 763739e460350..536a94f902e87 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -39,6 +39,11 @@
+         android:key="nfc"
+         android:title="@string/status_bar_nfc" />
+ 
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:icon="@drawable/ic_statusbar_volte"
++        android:key="ims"
++        android:title="@string/status_bar_ims" />
++
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:icon="@drawable/ic_statusbar_work"
+         android:key="managed_profile"
 diff --git a/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt b/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt
 index 3088d8b580239..1a0eb381a029f 100644
 --- a/packages/SystemUI/src/com/android/systemui/mediaprojection/appselector/MediaProjectionAppSelectorComponent.kt
@@ -730,7 +805,7 @@ index 1638780041772..bb1ad3487433c 100644
          obtainMessage(MSG_ADD_REMOVE_EMERGENCY, listening ? 1 : 0, 0, listener).sendToTarget();
      }
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/MobileSignalController.java b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/MobileSignalController.java
-index d40d11006aa79..4d6b7b14239c4 100644
+index d40d11006aa79..c3dd9a0ef5f98 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/MobileSignalController.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/MobileSignalController.java
 @@ -17,8 +17,10 @@ package com.android.systemui.statusbar.connectivity;
@@ -758,7 +833,15 @@ index d40d11006aa79..4d6b7b14239c4 100644
  import android.text.Html;
  import android.text.TextUtils;
  import android.util.Log;
-@@ -82,6 +91,8 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -61,6 +70,7 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+     private static final int STATUS_HISTORY_SIZE = 64;
+     private final TelephonyManager mPhone;
+     private final CarrierConfigTracker mCarrierConfigTracker;
++    private final ImsMmTelManager mImsMmTelManager;
+     private final SubscriptionDefaults mDefaults;
+     private final MobileMappingsProxy mMobileMappingsProxy;
+     private final String mNetworkNameDefault;
+@@ -82,6 +92,8 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
      // Where to copy the next state into.
      private int mMobileStatusHistoryIndex;
  
@@ -767,7 +850,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      private final MobileStatusTracker.Callback mMobileCallback =
              new MobileStatusTracker.Callback() {
                  private String mLastStatus;
-@@ -112,6 +123,28 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -112,6 +124,28 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
                  }
              };
  
@@ -796,7 +879,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      // TODO: Reduce number of vars passed in, if we have the NetworkController, probably don't
      // need listener lists anymore.
      public MobileSignalController(
-@@ -157,6 +190,7 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -157,6 +191,7 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
                  updateTelephony();
              }
          };
@@ -804,7 +887,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
          mMobileStatusTracker = mobileStatusTrackerFactory.createTracker(mMobileCallback);
      }
  
-@@ -187,6 +221,12 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -187,6 +222,12 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          notifyListenersIfNecessary();
      }
  
@@ -817,7 +900,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      void setCarrierNetworkChangeMode(boolean carrierNetworkChangeMode) {
          mCurrentState.carrierNetworkChangeMode = carrierNetworkChangeMode;
          updateTelephony();
-@@ -202,6 +242,14 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -202,6 +243,14 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          mContext.getContentResolver().registerContentObserver(Global.getUriFor(
                  Global.MOBILE_DATA + mSubscriptionInfo.getSubscriptionId()),
                  true, mObserver);
@@ -832,7 +915,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      }
  
      /**
-@@ -210,6 +258,13 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -210,6 +259,13 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
      public void unregisterListener() {
          mMobileStatusTracker.setListening(false);
          mContext.getContentResolver().unregisterContentObserver(mObserver);
@@ -846,7 +929,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      }
  
      private void updateInflateSignalStrength() {
-@@ -252,6 +307,46 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -252,6 +308,46 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          return getCurrentIconId();
      }
  
@@ -893,7 +976,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      @Override
      public void notifyListeners(SignalCallback callback) {
          // If the device is on carrier merged WiFi, we should let WifiSignalController to control
-@@ -330,6 +425,11 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -330,6 +426,11 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          return new SbInfo(showTriangle, typeIcon, statusIcon);
      }
  
@@ -905,7 +988,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      @Override
      protected MobileState cleanState() {
          return new MobileState();
-@@ -553,6 +653,22 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -553,6 +654,22 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          mMobileStatusHistoryIndex = (mMobileStatusHistoryIndex + 1) % STATUS_HISTORY_SIZE;
      }
  
@@ -928,7 +1011,7 @@ index d40d11006aa79..4d6b7b14239c4 100644
      @Override
      public void dump(PrintWriter pw) {
          super.dump(pw);
-@@ -579,6 +695,46 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
+@@ -579,6 +696,46 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
          dumpTableData(pw);
      }
  
@@ -1257,6 +1340,26 @@ index 501f694404561..72c0a27a47b78 100644
 +                .append(']').toString()
 +    }
 +}
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+index c25c1c70600ae..6bdbdd67fb726 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+@@ -134,6 +134,7 @@ public class PhoneStatusBarPolicy
+     private final String mSlotScreenRecord;
+     private final String mSlotFirewall;
+     private final String mSlotNfc;
++    private final String mSlotIms;
+     private final int mDisplayId;
+     private final SharedPreferences mSharedPreferences;
+     private final DateFormatUtil mDateFormatUtil;
+@@ -256,6 +257,7 @@ public class PhoneStatusBarPolicy
+                 com.android.internal.R.string.status_bar_screen_record);
+         mSlotFirewall = resources.getString(R.string.status_bar_firewall_slot);
+         mSlotNfc = "nfc";
++        mSlotIms = "ims";
+ 
+         mDisplayId = displayId;
+         mSharedPreferences = sharedPreferences;
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconController.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconController.java
 index 30d2295206d84..3c6fa1e61cc8b 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconController.java
@@ -1551,3 +1654,6 @@ index 3c418ed49adcf..8e095b437fb6c 100644
      ],
      aaptflags: [
          "--extra-packages com.android.systemui",
+-- 
+2.43.0
+

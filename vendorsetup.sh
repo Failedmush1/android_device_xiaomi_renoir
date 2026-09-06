@@ -34,11 +34,11 @@ else
 fi
 
 # Apply camera sepolicy patch
-if ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te; then
+if [ -f "vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te" ] && ! grep -q "platform_app)" vendor/xiaomi/camera/sepolicy/vendor/hal_camera_default.te; then
     echo "Applying camera sepolicy patch..."
-    patch -d vendor/xiaomi/camera -p1 < device/xiaomi/renoir/patches/0006-camera-Fix-sepolicy-error-for-platform_app_all.patch
+    patch -d vendor/xiaomi/camera -p1 < device/xiaomi/renoir/patches/0006-camera-Fix-sepolicy-error-for-platform_app_all.patch || true
 else
-    echo "camera sepolicy patch is already applied."
+    echo "camera sepolicy patch is already applied or missing."
 fi
 
 # Apply hardware/lineage/compat patch

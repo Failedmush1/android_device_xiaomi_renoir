@@ -1,10 +1,10 @@
-commit 6ed3e7d4a6ee9ee58ab8a96ffa5dd6c048a0d2cb
+commit ce45a86ad5258f05c9addb1a097f1f48a2356433
 Author: Failedmush <anytimewicked@gmail.com>
-Date:   Sun Sep 6 02:19:44 2026 +0000
+Date:   Sun Sep 6 04:20:36 2026 +0000
 
     fw/b: Custom changes for Renoir: NFC toggle
     
-    Change-Id: Idff50acb637ca31ef6d9ec0030f04b010b6dbef9
+    Change-Id: Ib1e63660796c2c15f96e786871104ed727aac1fb
 
 diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
 new file mode 100644
