@@ -11,13 +11,8 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
-# EvolutionX Flags
-TARGET_BOOT_ANIMATION_RES := 1080
-WITH_GMS := true
-TARGET_USES_MINI_GAPPS := false
-BUILD_BCR := true
-TARGET_ENABLE_BLUR := false
-
+WITH_GMS := false
+WITH_BCR := true
 TARGET_OPTIMIZED_DEXOPT := true
 TARGET_DEFAULT_PIXEL_LAUNCHER := false
 
