@@ -6,12 +6,15 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
+WITH_GMS := true
+$(call inherit-product-if-exists, vendor/gapps/arm64/arm64-vendor.mk)
+PRODUCT_SOONG_NAMESPACES += vendor/gapps/arm64 vendor/gapps/common
+
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
 -include vendor/lineage-priv/keys/keys.mk
 
-WITH_GMS := false
 WITH_BCR := true
 TARGET_OPTIMIZED_DEXOPT := true
 TARGET_DEFAULT_PIXEL_LAUNCHER := false
