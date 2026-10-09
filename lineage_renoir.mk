@@ -13,7 +13,7 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 -include vendor/lineage-priv/keys/keys.mk
 
 #Axion Bringup!
-AXION_CAMERA_REAR_INFO := 64,13,5
+AXION_CAMERA_REAR_INFO := 64,8,5
 AXION_CAMERA_FRONT_INFO := 20
 AXION_MAINTAINER := Failedmush
 AXION_PROCESSOR := Snapdragon_780g
