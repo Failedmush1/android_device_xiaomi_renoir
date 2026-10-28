@@ -9,6 +9,8 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 # Inherit some common Halcyon stuff.
 $(call inherit-product, vendor/halcyon/config/common.mk)
 
+-include vendor/lineage-priv/keys/keys.mk
+
 HALCYON_BUILD := renoir
 
 WITH_GMS := false

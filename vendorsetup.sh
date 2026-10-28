@@ -1,22 +1,34 @@
 # Auto-apply patches for renoir
-PATCH_ROOT="device/xiaomi/renoir/patches"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATCH_ROOT="$SCRIPT_DIR/patches"
+
+# Determine Android root directory
+if type gettop >/dev/null 2>&1 && [ -n "$(gettop)" ]; then
+    ANDROID_ROOT="$(gettop)"
+else
+    ANDROID_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+fi
 
 apply_patches() {
-    local target_dir=$1
+    local target_rel=$1
     local patch_subdir=$2
+    local target_dir="$ANDROID_ROOT/$target_rel"
     local full_patch_path="$PATCH_ROOT/$patch_subdir"
 
-    if [ -d "$full_patch_path" ]; then
-        echo "Checking patches for $target_dir..."
+    if [ -d "$full_patch_path" ] && [ -d "$target_dir" ]; then
+        echo "Checking patches for $target_rel..."
         for patch in "$full_patch_path"/*.patch; do
-            if patch -p1 --dry-run -R -d "$target_dir" < "$patch" > /dev/null 2>&1; then
-                echo "Patch $(basename "$patch") already applied to $target_dir, skipping."
+            [ -f "$patch" ] || continue
+            local patch_name
+            patch_name="$(basename "$patch")"
+            if git -C "$target_dir" apply --reverse --check "$patch" > /dev/null 2>&1; then
+                echo "Patch $patch_name already applied to $target_rel, skipping."
             else
-                if git -C "$target_dir" am "$patch" > /dev/null 2>&1; then
-                    echo "Successfully applied $(basename "$patch") to $target_dir"
+                if git -C "$target_dir" am -3 "$patch" > /dev/null 2>&1; then
+                    echo "Successfully applied $patch_name to $target_rel"
                 else
-                    echo "Failed to apply $(basename "$patch") to $target_dir - check for conflicts!"
-                    git -C "$target_dir" am --abort
+                    echo "Failed to apply $patch_name to $target_rel - check for conflicts!"
+                    git -C "$target_dir" am --abort > /dev/null 2>&1
                 fi
             fi
         done
