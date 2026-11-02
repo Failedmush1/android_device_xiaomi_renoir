@@ -6,20 +6,21 @@
 # Inherit from renoir device
 $(call inherit-product, device/xiaomi/renoir/device.mk)
 
-# Inherit some common Lineage stuff.
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
-
--include vendor/lineage-priv/keys/keys.mk
-
 # EvolutionX Flags
 TARGET_BOOT_ANIMATION_RES := 1080
 WITH_GMS := true
 TARGET_USES_MINI_GAPPS := false
-BUILD_BCR := true
+TARGET_INCLUDE_BCR := false
 TARGET_ENABLE_BLUR := false
+PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 
 TARGET_OPTIMIZED_DEXOPT := true
 TARGET_DEFAULT_PIXEL_LAUNCHER := false
+
+# Inherit some common Lineage stuff.
+$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+
+-include vendor/lineage-priv/keys/keys.mk
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := renoir
@@ -34,4 +35,3 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
     DeviceProduct=renoir \
     SystemName=renoir_global
 
-PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
