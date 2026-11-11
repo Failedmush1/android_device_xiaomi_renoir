@@ -10,7 +10,7 @@ $(call inherit-product, device/xiaomi/renoir/device.mk)
 TARGET_BOOT_ANIMATION_RES := 1080
 WITH_GMS := true
 TARGET_USES_MINI_GAPPS := false
-TARGET_INCLUDE_BCR := false
+TARGET_INCLUDE_BCR := true
 TARGET_ENABLE_BLUR := false
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 
