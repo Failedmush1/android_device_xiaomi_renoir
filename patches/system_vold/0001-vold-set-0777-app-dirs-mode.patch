@@ -1,0 +1,16 @@
+diff --git a/Utils.cpp b/Utils.cpp
+index 860f04f..1e5dbc8 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -378,9 +378,9 @@ int PrepareAppDirFromRoot(const std::string& path, const std::string& root, int
+         return -EINVAL;
+     }
+ 
+-    // mode = 770, plus setgid bit on directory to inherit GID when apps
++    // mode = 777, plus sticky bit on directory to inherit GID when apps
+     // create subdirs
+-    mode_t mode = S_IRWXU | S_IRWXG | S_ISGID;
++    mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO | S_ISGID;
+     // the project ID for application-specific directories is directly
+     // derived from their uid
+ 

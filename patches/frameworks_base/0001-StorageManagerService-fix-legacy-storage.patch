@@ -1,0 +1,65 @@
+diff --git a/services/core/java/com/android/server/StorageManagerService.java b/services/core/java/com/android/server/StorageManagerService.java
+index 831158d32..755247586 100644
+--- a/services/core/java/com/android/server/StorageManagerService.java
++++ b/services/core/java/com/android/server/StorageManagerService.java
+@@ -2251,18 +2251,31 @@ class StorageManagerService extends IStorageManager.Stub
+     private void snapshotAndMonitorLegacyStorageAppOp(UserHandle user) {
+         int userId = user.getIdentifier();
+ 
+-        // TODO(b/149391976): Use mIAppOpsService.getPackagesForOps instead of iterating below
+-        // It should improve performance but the AppOps method doesn't return any app here :(
+-        // This operation currently takes about ~20ms on a freshly flashed device
+-        for (ApplicationInfo ai : mPmInternal.getInstalledApplications(MATCH_DIRECT_BOOT_AWARE
+-                        | MATCH_DIRECT_BOOT_UNAWARE | MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER,
+-                        userId, Process.myUid())) {
++        List<AppOpsManager.PackageOps> pkgs = null;
++        try {
++            pkgs = mIAppOpsService.getPackagesForOps(new int[] { OP_LEGACY_STORAGE });
++        } catch (RemoteException e) {
++            Slog.e(TAG, "Failed to getPackagesForOps", e);
++        }
++        Set<String> legacyStoragePackages = new ArraySet<>();
++        if (pkgs != null) {
++            for (AppOpsManager.PackageOps pkg : pkgs) {
++                for (AppOpsManager.OpEntry op : pkg.getOps()) {
++                    if (op.getMode() == MODE_ALLOWED) {
++                        legacyStoragePackages.add(pkg.getPackageName());
++                    }
++                }
++            }
++        }
++        for (String packageName : legacyStoragePackages) {
+             try {
+-                boolean hasLegacy = mIAppOpsService.checkOperation(OP_LEGACY_STORAGE, ai.uid,
+-                        ai.packageName) == MODE_ALLOWED;
++                ApplicationInfo ai = mPmInternal.getApplicationInfo(packageName,
++                        MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE | MATCH_UNINSTALLED_PACKAGES | MATCH_ANY_USER,
++                        userId, Process.myUid());
++                boolean hasLegacy = legacyStoragePackages.contains(ai.packageName);
+                 updateLegacyStorageApps(ai.packageName, ai.uid, hasLegacy);
+-            } catch (RemoteException e) {
+-                Slog.e(TAG, "Failed to check legacy op for package " + ai.packageName, e);
++            } catch (Exception e) {
++                Slog.e(TAG, "Error retrieving application info for package: " + packageName, e);
+             }
+         }
+ 
+@@ -3820,15 +3833,14 @@ class StorageManagerService extends IStorageManager.Stub
+         final int userId = UserHandle.getUserId(callingUid);
+         final String propertyName = "sys.user." + userId + ".ce_available";
+ 
+-        // Ignore requests to create directories while CE storage is locked
+         if (!isCeStorageUnlocked(userId)) {
+-            throw new IllegalStateException("Failed to prepare " + appPath);
++            Slog.w(TAG, "Storage reported locked, but proceeding with mkdirs for: " + appPath);
+         }
+ 
+-        // Ignore requests to create directories if CE storage is not available
++        // Log if CE storage availability flag is not set, but proceed to vold
+         if ((userId == UserHandle.USER_SYSTEM)
+                 && !SystemProperties.getBoolean(propertyName, false)) {
+-            throw new IllegalStateException("Failed to prepare " + appPath);
++            Slog.w(TAG, propertyName + " is not set, but proceeding with mkdirs for: " + appPath);
+         }
+ 
+         if (Process.isPrivateComputeCoreUid(callingUid)) {

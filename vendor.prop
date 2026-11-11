@@ -7,3 +7,6 @@ persist.vendor.fingerprint.sensor_location=1080|960|200|local:463094648085706176
 
 # USB
 vendor.usb.product_string=Mi 11 Lite 5G
+
+# Skia renderer - fixes Vulkan Canvas drawing glitches and video rendering
+debug.hwui.renderer=skiagl

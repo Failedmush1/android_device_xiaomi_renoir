@@ -1,0 +1,45 @@
+diff --git a/src/com/android/providers/media/MediaProvider.java b/src/com/android/providers/media/MediaProvider.java
+index 7a94dd3..89b496a 100644
+--- a/src/com/android/providers/media/MediaProvider.java
++++ b/src/com/android/providers/media/MediaProvider.java
+@@ -12217,9 +12217,9 @@ public class MediaProvider extends ContentProvider {
+                         redact ? getRedactionRangesForFuse(path, ioPath, originalUid, uid, tid,
+                                 forceRedaction) : new long[0]);
+             }
+-            // Legacy apps that made is this far don't have the right storage permission and hence
+-            // are not allowed to access anything other than their external app directory
+-            if (isCallingPackageRequestingLegacy()) {
++            // Allow legacy apps that made it this far to fall through to checkIfFileOpenIsPermitted
++            // so granular media permissions (READ_MEDIA_VIDEO / READ_MEDIA_IMAGES) are checked
++            if (isCallingPackageRequestingLegacy() && forWrite) {
+                 return new FileOpenResult(OsConstants.EACCES /* status */, originalUid,
+                         mediaCapabilitiesUid, new long[0]);
+             }
+@@ -12716,9 +12716,8 @@ public class MediaProvider extends ContentProvider {
+                 return OsConstants.EACCES;
+             }
+ 
+-            // Legacy apps that made is this far don't have the right storage permission and hence
+-            // are not allowed to access anything other than their external app directory
+-            if (isCallingPackageRequestingLegacy()) {
++            // Legacy apps are allowed to read media directories
++            if (isCallingPackageRequestingLegacy() && !forRead) {
+                 return OsConstants.EACCES;
+             }
+             // This is a non-legacy app. Rest of the directories are generally writable
+diff --git a/src/com/android/providers/media/util/PermissionUtils.java b/src/com/android/providers/media/util/PermissionUtils.java
+index f8e8a54..362032f 100644
+--- a/src/com/android/providers/media/util/PermissionUtils.java
++++ b/src/com/android/providers/media/util/PermissionUtils.java
+@@ -178,10 +178,7 @@ public class PermissionUtils {
+                     checkPermissionForDataDelivery(context, READ_MEDIA_IMAGES, pid, uid,
+                             packageName, attributionTag,
+                             generateAppOpMessage(packageName, sOpDescription.get()))
+-                            && checkPermissionForDataDelivery(context, READ_MEDIA_VIDEO, pid, uid,
+-                            packageName, attributionTag,
+-                            generateAppOpMessage(packageName, sOpDescription.get()))
+-                            && checkPermissionForDataDelivery(context, READ_MEDIA_AUDIO, pid, uid,
++                            || checkPermissionForDataDelivery(context, READ_MEDIA_VIDEO, pid, uid,
+                             packageName, attributionTag,
+                             generateAppOpMessage(packageName, sOpDescription.get())));
+         } else {
