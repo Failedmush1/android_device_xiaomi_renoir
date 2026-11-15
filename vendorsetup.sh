@@ -21,3 +21,14 @@ if [ ! -f frameworks/base/.patch_applied_nfc_icon ]; then
     fi
     touch frameworks/base/.patch_applied_nfc_icon
 fi
+
+# Apply 2026 Security Patches to frameworks/base
+if [ ! -f frameworks/base/.patch_applied_security_2026 ]; then
+    if git -C frameworks/base apply --check ../../device/xiaomi/renoir/patches/0003-frameworks-base-Security-patches-2026.patch 2>/dev/null; then
+        echo "Applying 2026 security patches to frameworks/base..."
+        git -C frameworks/base apply ../../device/xiaomi/renoir/patches/0003-frameworks-base-Security-patches-2026.patch
+    else
+        echo "2026 security patches already in frameworks/base."
+    fi
+    touch frameworks/base/.patch_applied_security_2026
+fi
