@@ -1,0 +1,149 @@
+From 4aa2e976e661a2d54c1d4e439678b70e83c952c9 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sun, 15 Nov 2026 05:41:49 +0000
+Subject: [PATCH] SystemUI: Add crash-proof status bar NFC icon and status bar
+ tuner switch
+
+Change-Id: I98d888eb3b65f2e20ece01d79cf126bb9b904075
+---
+ .../res/drawable/ic_statusbar_nfc.xml         | 10 +++++++
+ .../SystemUI/res/drawable/stat_sys_nfc.xml    | 10 +++++++
+ packages/SystemUI/res/values/strings.xml      |  1 +
+ .../SystemUI/res/xml/status_bar_prefs.xml     |  6 +++++
+ .../statusbar/phone/PhoneStatusBarPolicy.java | 26 +++++++++++++++++++
+ 5 files changed, 53 insertions(+)
+ create mode 100644 packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_nfc.xml
+
+diff --git a/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+new file mode 100644
+index 000000000..16817c2cc
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_statusbar_nfc.xml
+@@ -0,0 +1,10 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++  <path
++      android:fillColor="#FFFFFFFF"
++      android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/stat_sys_nfc.xml b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+new file mode 100644
+index 000000000..55bca4cf8
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/stat_sys_nfc.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="17dp"
++    android:height="17dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1 .9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM18 6h-5c-1.1 0-2 .9-2 2v2.28c-.6 .35 -1 .98-1 1.72 0 1.1 .9 2 2 2s2-.9 2-2c0-.74-.4-1.38-1-1.72V8h3v8H8V8h2V6H6v12h12V6z" />
++</vector>
+diff --git a/packages/SystemUI/res/values/strings.xml b/packages/SystemUI/res/values/strings.xml
+index fad8c32fd..c7d05078b 100644
+--- a/packages/SystemUI/res/values/strings.xml
++++ b/packages/SystemUI/res/values/strings.xml
+@@ -22,6 +22,7 @@
+  */
+ -->
+ <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++    <string name="status_bar_nfc">NFC</string>
+     <!-- Name of the status bar as seen in the applications info settings page. [CHAR LIMIT=12] -->
+     <string name="app_label">System UI</string>
+ 
+diff --git a/packages/SystemUI/res/xml/status_bar_prefs.xml b/packages/SystemUI/res/xml/status_bar_prefs.xml
+index e15e78f6d..bcc26f92a 100644
+--- a/packages/SystemUI/res/xml/status_bar_prefs.xml
++++ b/packages/SystemUI/res/xml/status_bar_prefs.xml
+@@ -107,6 +107,12 @@
+         android:title="@string/status_bar_vowifi"
+         sysui:defValue="false" />
+ 
++
++    <!-- NFC -->
++    <com.android.systemui.tuner.StatusBarSwitch
++        android:key="nfc"
++        android:title="@string/status_bar_nfc"
++        android:icon="@drawable/ic_statusbar_nfc" />
+     <com.android.systemui.tuner.StatusBarSwitch
+         android:key="vpn"
+         android:title="@string/status_bar_vpn"
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+index 1f4d64ed1..70bac2b45 100755
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+@@ -30,6 +30,7 @@ import android.content.IntentFilter;
+ import android.content.SharedPreferences;
+ import android.content.res.Resources;
+ import android.media.AudioManager;
++import android.nfc.NfcAdapter;
+ import android.net.wifi.ScanResult;
+ import android.net.wifi.WifiManager;
+ import android.os.Handler;
+@@ -126,6 +127,7 @@ public class PhoneStatusBarPolicy
+     private final String mSlotSensorsOff;
+     private final String mSlotScreenRecord;
+     private final String mSlotConnectedDisplay;
++    private final String mSlotNfc = "nfc";
+     private final int mDisplayId;
+     private final SharedPreferences mSharedPreferences;
+     private final DateFormatUtil mDateFormatUtil;
+@@ -262,6 +264,7 @@ public class PhoneStatusBarPolicy
+         filter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
+         filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
+         filter.addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED);
++        filter.addAction(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
+         mBroadcastDispatcher.registerReceiverWithHandler(mIntentReceiver, filter, mHandler);
+         Observer<Integer> observer = ringer -> mHandler.post(this::updateVolumeZen);
+ 
+@@ -341,6 +344,12 @@ public class PhoneStatusBarPolicy
+         mIconController.setIcon(mSlotScreenRecord, R.drawable.stat_sys_screen_record, null);
+         mIconController.setIconVisibility(mSlotScreenRecord, false);
+ 
++        // nfc
++        mIconController.setIcon(mSlotNfc, R.drawable.stat_sys_nfc,
++                mResources.getString(R.string.status_bar_nfc));
++        mIconController.setIconVisibility(mSlotNfc, false);
++        updateNfc();
++
+         mRotationLockController.addCallback(this);
+         mBluetooth.addCallback(this);
+         mProvisionedController.addCallback(this);
+@@ -766,9 +775,26 @@ public class PhoneStatusBarPolicy
+                 case AudioManager.ACTION_HEADSET_PLUG:
+                     updateHeadsetPlug(intent);
+                     break;
++                case NfcAdapter.ACTION_ADAPTER_STATE_CHANGED:
++                    int state = intent.getIntExtra(NfcAdapter.EXTRA_ADAPTER_STATE, NfcAdapter.STATE_OFF);
++                    mIconController.setIconVisibility(mSlotNfc, state == NfcAdapter.STATE_ON);
++                    break;
+             }
+         }
+     };
++    private void updateNfc() {
++        boolean isEnabled = false;
++        try {
++            NfcAdapter adapter = NfcAdapter.getDefaultAdapter();
++            if (adapter != null) {
++                isEnabled = adapter.isEnabled();
++            }
++        } catch (Throwable t) {
++            // Safe fallback: never crash SystemUI
++        }
++        mIconController.setIconVisibility(mSlotNfc, isEnabled);
++    }
++
+ 
+     private Runnable mRemoveCastIconRunnable = new Runnable() {
+         @Override
+-- 
+2.43.0
+
