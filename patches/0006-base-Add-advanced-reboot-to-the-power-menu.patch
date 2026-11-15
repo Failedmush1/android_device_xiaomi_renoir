@@ -1,4 +1,4 @@
-From c5c062f98415edcb289a2982d6f838ccedfc191f Mon Sep 17 00:00:00 2001
+From d5552b75d5bbcef9e0338cf18f37c28a86822a27 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
 Date: Sun, 15 Nov 2026 08:39:32 +0000
 Subject: [PATCH] base: Add advanced reboot to the power menu
@@ -10,11 +10,15 @@ Change-Id: Id454fb4f4d72988973913ba9caa2cac6a8b63359
  .patch_applied_nfc_icon                       |  0
  .patch_applied_security_2026                  |  0
  core/java/android/provider/Settings.java      |  7 +++
+ .../internal/statusbar/IStatusBarService.aidl |  1 +
  data/etc/com.android.systemui.xml             |  2 +
  packages/SystemUI/AndroidManifest.xml         |  2 +
+ .../systemui/plugins/GlobalActions.java       |  3 ++
  .../res/values/advanced_reboot_strings.xml    | 10 ++++
- .../GlobalActionsDialogLite.java              | 56 +++++++++++++++++++
- 9 files changed, 77 insertions(+)
+ .../globalactions/GlobalActionsComponent.java |  7 ++-
+ .../GlobalActionsDialogLite.java              | 51 +++++++++++++++++++
+ .../statusbar/StatusBarManagerService.java    | 16 ++++--
+ 13 files changed, 94 insertions(+), 5 deletions(-)
  create mode 100644 .patch_applied_4g_icon
  create mode 100644 .patch_applied_keybox_attestation
  create mode 100644 .patch_applied_nfc_icon
@@ -51,6 +55,18 @@ index 00c57edb8..194b53022 100644
          /**
           * The package name for the custom bugreport handler app. This app must be bugreport
           * allow-listed. This is currently used only by Power Menu short press.
+diff --git a/core/java/com/android/internal/statusbar/IStatusBarService.aidl b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+index d26b14d17..dbe611808 100644
+--- a/core/java/com/android/internal/statusbar/IStatusBarService.aidl
++++ b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+@@ -103,6 +103,7 @@ interface IStatusBarService
+      */
+     void shutdown();
+     void reboot(boolean safeMode);
++    void rebootWithReason(boolean safeMode, String reason);
+ 
+     /** just restarts android without rebooting device. Used for some feature flags. */
+     void restart();
 diff --git a/data/etc/com.android.systemui.xml b/data/etc/com.android.systemui.xml
 index a9ceec9ae..ac98420dc 100644
 --- a/data/etc/com.android.systemui.xml
@@ -77,6 +93,19 @@ index 8cd00ae8f..2201ddc54 100644
      <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
      <uses-permission android:name="android.permission.MASTER_CLEAR" />
      <uses-permission android:name="android.permission.VIBRATE" />
+diff --git a/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java b/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
+index 95ff13b45..0390fc0a8 100644
+--- a/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
++++ b/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
+@@ -41,5 +41,8 @@ public interface GlobalActions extends Plugin {
+ 
+         void shutdown();
+         void reboot(boolean safeMode);
++        default void reboot(boolean safeMode, String reason) {
++            reboot(safeMode);
++        }
+     }
+ }
 diff --git a/packages/SystemUI/res/values/advanced_reboot_strings.xml b/packages/SystemUI/res/values/advanced_reboot_strings.xml
 new file mode 100644
 index 000000000..c5c1f5fda
@@ -93,8 +122,27 @@ index 000000000..c5c1f5fda
 +    <string name="global_action_reboot_recovery">Recovery</string>
 +    <string name="global_action_reboot_bootloader">Bootloader</string>
 +</resources>
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
+index 9f321d83d..fc3737da9 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
+@@ -115,8 +115,13 @@ public class GlobalActionsComponent implements CoreStartable, Callbacks, GlobalA
+ 
+     @Override
+     public void reboot(boolean safeMode) {
++        reboot(safeMode, null);
++    }
++
++    @Override
++    public void reboot(boolean safeMode, String reason) {
+         try {
+-            mBarService.reboot(safeMode);
++            mBarService.rebootWithReason(safeMode, reason);
+         } catch (RemoteException e) {
+         }
+     }
 diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
-index 5df3d44a8..4383d9fbf 100644
+index 5df3d44a8..1fcd96492 100644
 --- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 +++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 @@ -58,6 +58,7 @@ import android.os.Bundle;
@@ -163,7 +211,7 @@ index 5df3d44a8..4383d9fbf 100644
      @Override
      public void onUiModeChanged() {
          // Colors may change, depending on UI mode
-@@ -988,6 +1012,38 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+@@ -988,6 +1012,33 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
          }
      }
  
@@ -190,18 +238,50 @@ index 5df3d44a8..4383d9fbf 100644
 +            if (ActivityManager.isUserAMonkey()) {
 +                return;
 +            }
-+            mBackgroundExecutor.execute(() -> {
-+                PowerManager pm = mContext.getSystemService(PowerManager.class);
-+                if (pm != null) {
-+                    pm.reboot(mReason);
-+                }
-+            });
++            mWindowManagerFuncs.reboot(false, mReason);
 +        }
 +    }
 +
      @VisibleForTesting
      class ScreenshotAction extends SinglePressAction {
          ScreenshotAction() {
+diff --git a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+index 5183e0cd0..08a665bc0 100644
+--- a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
++++ b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+@@ -1602,20 +1602,28 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
+      */
+     @Override
+     public void reboot(boolean safeMode) {
++        rebootWithReason(safeMode, null);
++    }
++
++    @Override
++    public void rebootWithReason(boolean safeMode, String reason) {
+         enforceStatusBarService();
+-        String reason = safeMode
+-                ? PowerManager.REBOOT_SAFE_MODE
+-                : PowerManager.SHUTDOWN_USER_REQUESTED;
++        if (reason == null) {
++            reason = safeMode
++                    ? PowerManager.REBOOT_SAFE_MODE
++                    : PowerManager.SHUTDOWN_USER_REQUESTED;
++        }
+         ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
+         final long identity = Binder.clearCallingIdentity();
+         try {
+             mNotificationDelegate.prepareForPossibleShutdown();
++            final String finalReason = reason;
+             mHandler.post(() -> {
+                 // ShutdownThread displays UI, so give it a UI context.
+                 if (safeMode) {
+                     ShutdownThread.rebootSafeMode(getUiContext(), true);
+                 } else {
+-                    ShutdownThread.reboot(getUiContext(), reason, false);
++                    ShutdownThread.reboot(getUiContext(), finalReason, false);
+                 }
+             });
+         } finally {
 -- 
 2.43.0
 
