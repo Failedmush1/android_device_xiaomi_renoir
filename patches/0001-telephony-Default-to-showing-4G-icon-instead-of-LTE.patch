@@ -1,18 +1,32 @@
-From 94e73273d63fa0e6dee40acb882f25285fd08aef Mon Sep 17 00:00:00 2001
+From 46a2ae772f5700d12441edb9e6cf3a456d9805e2 Mon Sep 17 00:00:00 2001
 From: Failedmush <anytimewicked@gmail.com>
-Date: Fri, 4 Sep 2026 09:00:00 +0000
+Date: Sun, 15 Nov 2026 01:28:26 +0000
 Subject: [PATCH] telephony: Default to showing 4G icon instead of LTE
 
-Change KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL default to true.
+Change-Id: I7dcc084f3e87c92750e73e7700f11643ed7bf61f
 ---
- telephony/java/android/telephony/CarrierConfigManager.java | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ .../src/com/android/settingslib/mobile/MobileMappings.java      | 2 +-
+ telephony/java/android/telephony/CarrierConfigManager.java      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+index c771fbe6..dc8b2b16 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
++++ b/packages/SettingsLib/src/com/android/settingslib/mobile/MobileMappings.java
+@@ -213,7 +213,7 @@ public class MobileMappings {
+         public boolean showAtLeast3G = false;
+         public boolean show4gFor3g = false;
+         public boolean alwaysShowCdmaRssi = false;
+-        public boolean show4gForLte = false;
++        public boolean show4gForLte = true;
+         public boolean show4glteForLte = false;
+         public boolean hideLtePlus = false;
+         public boolean hspaDataDistinguishable;
 diff --git a/telephony/java/android/telephony/CarrierConfigManager.java b/telephony/java/android/telephony/CarrierConfigManager.java
-index b4616bdb9bc1..f18072fa46ad 100644
+index 6df727b2..1bdfc5ed 100644
 --- a/telephony/java/android/telephony/CarrierConfigManager.java
 +++ b/telephony/java/android/telephony/CarrierConfigManager.java
-@@ -9004,7 +9004,7 @@ public class CarrierConfigManager {
+@@ -10382,7 +10382,7 @@ public class CarrierConfigManager {
          sDefaults.putBoolean(KEY_SHOW_PRECISE_FAILED_CAUSE_BOOL, false);
          sDefaults.putBoolean(KEY_SPN_DISPLAY_RULE_USE_ROAMING_FROM_SERVICE_STATE_BOOL, false);
          sDefaults.putBoolean(KEY_ALWAYS_SHOW_DATA_RAT_ICON_BOOL, false);
@@ -22,4 +36,5 @@ index b4616bdb9bc1..f18072fa46ad 100644
          sDefaults.putBoolean(KEY_SHOW_4G_FOR_3G_DATA_ICON_BOOL, false);
          sDefaults.putString(KEY_OPERATOR_NAME_FILTER_PATTERN_STRING, "");
 -- 
-2.34.1
+2.43.0
+
