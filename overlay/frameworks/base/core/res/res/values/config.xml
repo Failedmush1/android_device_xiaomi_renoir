@@ -5,6 +5,12 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
+    <!-- Flag indicating whether we should enable the automatic brightness in Settings. -->
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <!-- Auto-brightness sensor type string -->
+    <string name="config_displayLightSensorType">android.sensor.light</string>
+
     <!-- Array of desired screen brightness in nits corresponding to the lux values
          in the config_autoBrightnessLevels array. As with config_screenBrightnessMinimumNits and
          config_screenBrightnessMaximumNits, the display brightness is defined as the measured
