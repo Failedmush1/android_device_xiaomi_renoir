@@ -32,3 +32,11 @@ if [ ! -f frameworks/base/.patch_applied_security_2026 ]; then
     fi
     touch frameworks/base/.patch_applied_security_2026
 fi
+
+# Apply hardware/lineage/compat patch
+if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
+    echo "Applying hardware/lineage/compat libstagefright_foundation-v33 patch..."
+    patch -d hardware/lineage/compat -p1 < device/xiaomi/renoir/patches/0007-compat-Provide-libstagefright_foundation-v33.patch
+else
+    echo "hardware/lineage/compat libstagefright_foundation-v33 patch is already applied or repo missing."
+fi
