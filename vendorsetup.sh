@@ -45,16 +45,6 @@ if [ ! -f frameworks/base/.patch_applied_keybox_attestation ]; then
     touch frameworks/base/.patch_applied_keybox_attestation
 fi
 
-# Apply Advanced Reboot patch to frameworks/base
-if [ ! -f frameworks/base/.patch_applied_advanced_reboot ]; then
-    if git -C frameworks/base apply --check ../../device/xiaomi/renoir/patches/0006-base-Add-advanced-reboot-to-the-power-menu.patch 2>/dev/null; then
-        echo "Applying Advanced Reboot patch to frameworks/base..."
-        git -C frameworks/base apply ../../device/xiaomi/renoir/patches/0006-base-Add-advanced-reboot-to-the-power-menu.patch
-    else
-        echo "Advanced Reboot already in frameworks/base."
-    fi
-    touch frameworks/base/.patch_applied_advanced_reboot
-fi
 
 # Apply hardware/lineage/compat patch
 if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
