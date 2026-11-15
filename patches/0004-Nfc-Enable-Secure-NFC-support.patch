@@ -1,0 +1,17 @@
+diff --git a/src/com/android/nfc/NfcService.java b/src/com/android/nfc/NfcService.java
+index b817fbc..c76194b 100644
+--- a/src/com/android/nfc/NfcService.java
++++ b/src/com/android/nfc/NfcService.java
+@@ -1914,12 +1914,6 @@ public class NfcService implements DeviceHostListener {
+ 
+         @Override
+         public boolean deviceSupportsNfcSecure() {
+-            String skuList[] = mContext.getResources().getStringArray(
+-                R.array.config_skuSupportsSecureNfc);
+-            String sku = SystemProperties.get("ro.boot.hardware.sku");
+-            if (TextUtils.isEmpty(sku) || !Utils.arrayContains(skuList, sku)) {
+-                return false;
+-            }
+             return true;
+         }
+ 

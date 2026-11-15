@@ -82,10 +82,13 @@ void vendor_load_properties() {
 
     if (region == "CN") { // China
         set_device_props("M2101K9C", "renoir", "Mi 11 Lite 5G");
+        property_override("ro.boot.hardware.sku", "renoir");
     } else if (region == "JP") { // Japan
         set_device_props("M2101K9R", "renoir_jp", "Mi 11 Lite 5G");
+        property_override("ro.boot.hardware.sku", "renoir_jp");
     } else { // Global
         set_device_props("M2101K9G", "renoir_global", "Mi 11 Lite 5G");
+        property_override("ro.boot.hardware.sku", "renoir_global");
     }
 
     // Set hardware revision

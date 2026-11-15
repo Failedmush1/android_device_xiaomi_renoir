@@ -41,3 +41,14 @@ if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33"
 else
     echo "hardware/lineage/compat libstagefright_foundation-v33 patch is already applied or repo missing."
 fi
+
+# Apply Secure NFC patch to vendor/nxp/opensource/commonsys/packages/apps/Nfc
+if [ ! -f vendor/nxp/opensource/commonsys/packages/apps/Nfc/.patch_applied_secure_nfc ]; then
+    if git -C vendor/nxp/opensource/commonsys/packages/apps/Nfc apply --check ../../../../../device/xiaomi/renoir/patches/0004-Nfc-Enable-Secure-NFC-support.patch 2>/dev/null; then
+        echo "Applying Secure NFC patch to NXP Nfc..."
+        git -C vendor/nxp/opensource/commonsys/packages/apps/Nfc apply ../../../../../device/xiaomi/renoir/patches/0004-Nfc-Enable-Secure-NFC-support.patch
+    else
+        echo "Secure NFC patch already applied or skipped."
+    fi
+    touch vendor/nxp/opensource/commonsys/packages/apps/Nfc/.patch_applied_secure_nfc
+fi
