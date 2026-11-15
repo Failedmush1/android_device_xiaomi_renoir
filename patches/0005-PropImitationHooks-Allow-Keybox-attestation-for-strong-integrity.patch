@@ -1,0 +1,33 @@
+From 0f78c74e7cd22e42bb47530618d59e81694e1e94 Mon Sep 17 00:00:00 2001
+From: Failedmush <anytimewicked@gmail.com>
+Date: Sun, 15 Nov 2026 08:15:58 +0000
+Subject: [PATCH] PropImitationHooks: Allow Keybox attestation for strong
+ integrity
+
+Change-Id: I4e7ac3be36404f6b87038a2c6ce9628b93c3a6ba
+---
+ .../com/android/internal/util/PropImitationHooks.java     | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/core/java/com/android/internal/util/PropImitationHooks.java b/core/java/com/android/internal/util/PropImitationHooks.java
+index f6f402b3f..ef87e4508 100644
+--- a/core/java/com/android/internal/util/PropImitationHooks.java
++++ b/core/java/com/android/internal/util/PropImitationHooks.java
+@@ -248,6 +248,14 @@ public class PropImitationHooks {
+             return;
+         }
+ 
++        // If an external keybox (e.g. Tricky Store / module) exists, don't block key attestation
++        if (new java.io.File("/data/adb/tricky_store/keybox.xml").exists() ||
++            new java.io.File("/data/adb/modules/tricky_store").exists() ||
++            new java.io.File("/data/system/keybox.xml").exists()) {
++            dlog("Key attestation blocking bypassed for external keybox");
++            return;
++        }
++
+         // Check stack for SafetyNet or Play Integrity
+         if (isCallerSafetyNet() || sIsFinsky) {
+             dlog("Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
+-- 
+2.43.0
+

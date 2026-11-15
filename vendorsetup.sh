@@ -34,6 +34,17 @@ if [ ! -f frameworks/base/.patch_applied_security_2026 ]; then
     touch frameworks/base/.patch_applied_security_2026
 fi
 
+# Apply Keybox attestation support patch to frameworks/base
+if [ ! -f frameworks/base/.patch_applied_keybox_attestation ]; then
+    if git -C frameworks/base apply --check ../../device/xiaomi/renoir/patches/0005-PropImitationHooks-Allow-Keybox-attestation-for-strong-integrity.patch 2>/dev/null; then
+        echo "Applying Keybox attestation support patch to frameworks/base..."
+        git -C frameworks/base apply ../../device/xiaomi/renoir/patches/0005-PropImitationHooks-Allow-Keybox-attestation-for-strong-integrity.patch
+    else
+        echo "Keybox attestation support already in frameworks/base."
+    fi
+    touch frameworks/base/.patch_applied_keybox_attestation
+fi
+
 # Apply hardware/lineage/compat patch
 if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
     echo "Applying hardware/lineage/compat libstagefright_foundation-v33 patch..."
