@@ -49,3 +49,4 @@ SOONG_CONFIG_XIAOMI_VIBRATOR_USE_EFFECT_STREAM := true
 
 # Include proprietary files
 include vendor/xiaomi/renoir/BoardConfigVendor.mk
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
