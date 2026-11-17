@@ -35,6 +35,11 @@ PRODUCT_PACKAGES += \
     RenoirSystemUIOverlay \
     TargetWifiOverlay
 
+# Soong namespaces
+PRODUCT_SOONG_NAMESPACES += \
+    $(LOCAL_PATH) \
+    vendor/xiaomi/camera
+
 
 # Camera
 $(call inherit-product-if-exists, vendor/xiaomi/camera/miuicamera.mk)
