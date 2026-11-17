@@ -26,13 +26,18 @@ TARGET_INIT_VENDOR_LIB := //$(DEVICE_PATH):libinit_renoir
 TARGET_RECOVERY_DEVICE_MODULES := libinit_renoir
 
 # Prebuilt Linux 6.18 Kernel
-TARGET_PREBUILT_KERNEL := device/xiaomi/renoir-kernel-6.18/Image
-BOARD_PREBUILT_DTBOIMAGE := device/xiaomi/renoir-kernel-6.18/dtbo.img
-TARGET_PREBUILT_DTB := device/xiaomi/renoir-kernel-6.18/dtb.img
-BOARD_VENDOR_KERNEL_MODULES := $(wildcard device/xiaomi/renoir-kernel-6.18/vendor_ramdisk/*.ko)
+KERNEL_PATH := device/xiaomi/renoir-kernel-6.18
+TARGET_PREBUILT_KERNEL := $(KERNEL_PATH)/Image
+BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_PATH)/dtbo.img
+TARGET_PREBUILT_DTB := $(KERNEL_PATH)/dtb.img
+
+BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(KERNEL_PATH)/vendor_ramdisk/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(wildcard $(KERNEL_PATH)/vendor_ramdisk/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(strip $(shell cat $(KERNEL_PATH)/vendor_ramdisk/modules.load))
+BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD)
 
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
-
+BOARD_KERNEL_CMDLINE += binder.impl=rust iommu.strict=1 deferred_probe_timeout=-1 redwood.nlmsg_legacy
 # Partitions
 BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 
