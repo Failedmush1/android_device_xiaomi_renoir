@@ -25,19 +25,13 @@ DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/hidl/manifest.xml
 TARGET_INIT_VENDOR_LIB := //$(DEVICE_PATH):libinit_renoir
 TARGET_RECOVERY_DEVICE_MODULES := libinit_renoir
 
-# Kernel
-KERNEL_FRAGMENT_CONFIG := vendor/renoir_QGKI.config
+# Prebuilt Linux 6.18 Kernel
+TARGET_PREBUILT_KERNEL := device/xiaomi/renoir-kernel-6.18/Image
+BOARD_PREBUILT_DTBOIMAGE := device/xiaomi/renoir-kernel-6.18/dtbo.img
+TARGET_PREBUILT_DTB := device/xiaomi/renoir-kernel-6.18/dtb.img
+BOARD_VENDOR_KERNEL_MODULES := $(wildcard device/xiaomi/renoir-kernel-6.18/vendor_ramdisk/*.ko)
 
-# Kernel modules
-BOARD_VENDOR_KERNEL_MODULES += \
-    $(KERNEL_MODULES_OUT)/focaltech_touch.ko \
-    $(KERNEL_MODULES_OUT)/fpc1020_tee.ko \
-    $(KERNEL_MODULES_OUT)/goodix_core.ko \
-    $(KERNEL_MODULES_OUT)/goodix_ts_gesture.ko \
-    $(KERNEL_MODULES_OUT)/goodix_ts_tools.ko \
-    $(KERNEL_MODULES_OUT)/qcom-hv-haptics.ko \
-    $(KERNEL_MODULES_OUT)/xiaomi_touch.ko
-BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOOT_KERNEL_MODULES)
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 
 # Partitions
 BOARD_DTBOIMG_PARTITION_SIZE := 25165824

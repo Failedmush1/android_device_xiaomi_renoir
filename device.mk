@@ -6,6 +6,9 @@
 
 # Inherit from sm8350-common
 $(call inherit-product, device/xiaomi/sm8350-common/common.mk)
+# Skip VINTF kernel config checks for prebuilt 6.18 kernel
+PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
+
 
 # Audio
 PRODUCT_COPY_FILES += \
