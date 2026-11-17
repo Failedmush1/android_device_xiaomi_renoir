@@ -1,0 +1,2187 @@
+diff --git a/core/java/android/app/ApplicationPackageManager.java b/core/java/android/app/ApplicationPackageManager.java
+index 5956e2bde..850c4d6ed 100644
+--- a/core/java/android/app/ApplicationPackageManager.java
++++ b/core/java/android/app/ApplicationPackageManager.java
+@@ -125,6 +125,7 @@ import android.util.Log;
+ import android.util.Slog;
+ import android.util.Xml;
+ 
++import com.android.internal.R;
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.annotations.Immutable;
+ import com.android.internal.annotations.VisibleForTesting;
+@@ -1796,6 +1797,14 @@ public class ApplicationPackageManager extends PackageManager {
+     @Override
+     public Drawable getDrawable(String packageName, @DrawableRes int resId,
+             @Nullable ApplicationInfo appInfo) {
++        return getDrawableInternal(packageName, resId, appInfo, /* isIcon= */ false);
++    }
++
++    /** @hide */
++    @Nullable
++    @Override
++    public Drawable getDrawableInternal(String packageName, @DrawableRes int resId,
++            @Nullable ApplicationInfo appInfo, boolean isIcon) {
+         final ResourceName name = new ResourceName(packageName, resId);
+         final Drawable cachedIcon = getCachedIcon(name);
+         if (cachedIcon != null) {
+@@ -1813,7 +1822,10 @@ public class ApplicationPackageManager extends PackageManager {
+         if (resId != 0) {
+             try {
+                 final Resources r = getResourcesForApplication(appInfo);
+-                final Drawable dr = r.getDrawable(resId, null);
++                final Drawable dr = isIcon
++                        ? r.getDrawableForDensityCapped(
++                                resId, /* density= */ 0, /* theme= */ null)
++                        : r.getDrawable(resId, null);
+                 if (dr != null) {
+                     putCachedIcon(name, dr);
+                 }
+@@ -3430,7 +3442,8 @@ public class ApplicationPackageManager extends PackageManager {
+             if (itemInfo.isArchived) {
+                 dr = getArchivedAppIcon(itemInfo.packageName);
+             } else {
+-                dr = getDrawable(itemInfo.packageName, itemInfo.icon, appInfo);
++                dr = getDrawableInternal(
++                        itemInfo.packageName, itemInfo.icon, appInfo, /* isIcon= */ true);
+             }
+         }
+         if (dr == null && itemInfo != appInfo && appInfo != null) {
+diff --git a/core/java/android/content/pm/LabeledIntent.java b/core/java/android/content/pm/LabeledIntent.java
+index ae41252bc..239a2885c 100644
+--- a/core/java/android/content/pm/LabeledIntent.java
++++ b/core/java/android/content/pm/LabeledIntent.java
+@@ -148,10 +148,13 @@ public class LabeledIntent extends Intent {
+      * Retrieve the icon associated with this object.  If the object does
+      * not have a icon, null will be returned, in which case you will probably
+      * want to load the icon from the underlying resolved info for the Intent.
++     *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
+      */
+     public Drawable loadIcon(PackageManager pm) {
+         if (mIcon != 0 && mSourcePackage != null) {
+-            Drawable icon = pm.getDrawable(mSourcePackage, mIcon, null);
++            Drawable icon = pm.getDrawableInternal(mSourcePackage, mIcon, null, /* isIcon= */ true);
+             if (icon != null) {
+                 return icon;
+             }
+diff --git a/core/java/android/content/pm/LauncherActivityInfo.java b/core/java/android/content/pm/LauncherActivityInfo.java
+index cb3455b26..90e8f326a 100644
+--- a/core/java/android/content/pm/LauncherActivityInfo.java
++++ b/core/java/android/content/pm/LauncherActivityInfo.java
+@@ -115,6 +115,10 @@ public class LauncherActivityInfo {
+ 
+     /**
+      * Returns the icon for this activity, without any badging for the profile.
++     *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param density The preferred density of the icon, zero for default density. Use
+      * density DPI values from {@link DisplayMetrics}.
+      * @see #getBadgedIcon(int)
+@@ -130,7 +134,9 @@ public class LauncherActivityInfo {
+             try {
+                 final Resources resources = mPm.getResourcesForApplication(
+                         getActivityInfo().applicationInfo);
+-                icon = resources.getDrawableForDensity(iconRes, density);
++                // Since this is loading the activity's icon, we use the capped resource API
++                // to apply downsampling protection and prevent OOMs.
++                icon = resources.getDrawableForDensityCapped(iconRes, density, /* theme= */ null);
+             } catch (NameNotFoundException | Resources.NotFoundException exc) {
+             }
+         }
+diff --git a/core/java/android/content/pm/LauncherApps.java b/core/java/android/content/pm/LauncherApps.java
+index df27f9d4e..e7dea1e63 100644
+--- a/core/java/android/content/pm/LauncherApps.java
++++ b/core/java/android/content/pm/LauncherApps.java
+@@ -1711,7 +1711,10 @@ public class LauncherApps {
+      * Returns the icon for this shortcut, without any badging for the profile.
+      *
+      * <p>The calling launcher application must be allowed to access the shortcut information,
+-     * as defined in {@link #hasShortcutHostPermission()}.
++     * as defined in {@link #hasShortcutHostPermission()}.</p>
++     *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
+      *
+      * @param density The preferred density of the icon, zero for default density. Use
+      * density DPI values from {@link DisplayMetrics}.
+@@ -1732,14 +1735,14 @@ public class LauncherApps {
+             final ParcelFileDescriptor pfd = getUriShortcutIconFd(shortcut);
+             return loadDrawableFromFileDescriptor(pfd, shortcut.hasAdaptiveBitmap());
+         } else if (shortcut.hasIconResource()) {
+-            return loadDrawableResourceFromPackage(shortcut.getPackage(),
++            return loadIconResourceFromPackage(shortcut.getPackage(),
+                     shortcut.getIconResourceId(), shortcut.getUserHandle(), density);
+         } else if (shortcut.getIcon() != null) {
+             // This happens if a shortcut is pending-approval.
+             final Icon icon = shortcut.getIcon();
+             switch (icon.getType()) {
+                 case Icon.TYPE_RESOURCE: {
+-                    return loadDrawableResourceFromPackage(shortcut.getPackage(),
++                    return loadIconResourceFromPackage(shortcut.getPackage(),
+                             icon.getResId(), shortcut.getUserHandle(), density);
+                 }
+                 case Icon.TYPE_BITMAP:
+@@ -1820,7 +1823,7 @@ public class LauncherApps {
+         }
+     }
+ 
+-    private Drawable loadDrawableResourceFromPackage(String packageName, int resId,
++    private Drawable loadIconResourceFromPackage(String packageName, int resId,
+             UserHandle user, int density) {
+         try {
+             if (resId == 0) {
+@@ -1828,7 +1831,9 @@ public class LauncherApps {
+             }
+             final ApplicationInfo ai = getApplicationInfo(packageName, /* flags =*/ 0, user);
+             final Resources res = mContext.getPackageManager().getResourcesForApplication(ai);
+-            return res.getDrawableForDensity(resId, density);
++            // Since this private helper is exclusively used to load shortcut icons, we use
++            // the capped resource API to apply downsampling protection and prevent OOMs.
++            return res.getDrawableForDensityCapped(resId, density, /* theme= */ null);
+         } catch (NameNotFoundException | Resources.NotFoundException e) {
+             return null;
+         }
+@@ -1838,7 +1843,10 @@ public class LauncherApps {
+      * Returns the shortcut icon with badging appropriate for the profile.
+      *
+      * <p>The calling launcher application must be allowed to access the shortcut information,
+-     * as defined in {@link #hasShortcutHostPermission()}.
++     * as defined in {@link #hasShortcutHostPermission()}.</p>
++     *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
+      *
+      * @param density Optional density for the icon, or 0 to use the default density. Use
+      * @return A badged icon for the shortcut.
+diff --git a/core/java/android/content/pm/PackageItemInfo.java b/core/java/android/content/pm/PackageItemInfo.java
+index 51285decb..fbb4b97c4 100644
+--- a/core/java/android/content/pm/PackageItemInfo.java
++++ b/core/java/android/content/pm/PackageItemInfo.java
+@@ -279,6 +279,9 @@ public class PackageItemInfo {
+      * will call back on the given PackageManager to load the icon from
+      * the application.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param pm A PackageManager from which the icon can be loaded; usually
+      * the PackageManager from which you originally retrieved this item.
+      *
+@@ -297,6 +300,9 @@ public class PackageItemInfo {
+      * This will call back on the given PackageManager to load the icon from
+      * the application.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param pm A PackageManager from which the icon can be loaded; usually
+      * the PackageManager from which you originally retrieved this item.
+      *
+@@ -314,6 +320,9 @@ public class PackageItemInfo {
+      * will call back on the given PackageManager to load the banner from
+      * the application.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param pm A PackageManager from which the banner can be loaded; usually
+      * the PackageManager from which you originally retrieved this item.
+      *
+@@ -323,7 +332,8 @@ public class PackageItemInfo {
+     @android.ravenwood.annotation.RavenwoodThrow(blockedBy = android.content.res.Resources.class)
+     public Drawable loadBanner(PackageManager pm) {
+         if (banner != 0) {
+-            Drawable dr = pm.getDrawable(packageName, banner, getApplicationInfo());
++            Drawable dr = pm.getDrawableInternal(
++                    packageName, banner, getApplicationInfo(), /* isIcon= */ true);
+             if (dr != null) {
+                 return dr;
+             }
+@@ -368,6 +378,9 @@ public class PackageItemInfo {
+      * will call back on the given PackageManager to load the logo from
+      * the application.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param pm A PackageManager from which the logo can be loaded; usually
+      * the PackageManager from which you originally retrieved this item.
+      *
+@@ -377,7 +390,8 @@ public class PackageItemInfo {
+     @android.ravenwood.annotation.RavenwoodThrow(blockedBy = android.content.res.Resources.class)
+     public Drawable loadLogo(PackageManager pm) {
+         if (logo != 0) {
+-            Drawable d = pm.getDrawable(packageName, logo, getApplicationInfo());
++            Drawable d = pm.getDrawableInternal(
++                    packageName, logo, getApplicationInfo(), /* isIcon= */ true);
+             if (d != null) {
+                 return d;
+             }
+diff --git a/core/java/android/content/pm/PackageManager.java b/core/java/android/content/pm/PackageManager.java
+index 282ede385..376d65e9f 100644
+--- a/core/java/android/content/pm/PackageManager.java
++++ b/core/java/android/content/pm/PackageManager.java
+@@ -8305,12 +8305,31 @@ public abstract class PackageManager {
+     public abstract Drawable getDrawable(@NonNull String packageName, @DrawableRes int resid,
+             @Nullable ApplicationInfo appInfo);
+ 
++    /**
++     * Retrieve an image from a package, with optional capping for icons.
++     *
++     * @param packageName The name of the package from which to load the resource.
++     * @param resid The resource identifier.
++     * @param appInfo ApplicationInfo of the target package.
++     * @param isIcon Whether the resource is an icon and should be capped.
++     * @return Drawable An object that can be used to draw this resource, or null.
++     * @hide
++     */
++    @Nullable
++    public Drawable getDrawableInternal(@NonNull String packageName, @DrawableRes int resid,
++            @Nullable ApplicationInfo appInfo, boolean isIcon) {
++        return getDrawable(packageName, resid, appInfo);
++    }
++
+     /**
+      * Retrieve the icon associated with an activity.  Given the full name of
+      * an activity, retrieves the information about it and calls
+      * {@link ComponentInfo#loadIcon ComponentInfo.loadIcon()} to return its icon.
+      * If the activity cannot be found, NameNotFoundException is thrown.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link #getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param activityName Name of the activity whose icon is to be retrieved.
+      *
+      * @return Returns the image of the icon, or the default activity icon if
+@@ -8351,6 +8370,9 @@ public abstract class PackageManager {
+      * {@link ComponentInfo#loadIcon ComponentInfo.loadIcon()} to return its
+      * banner. If the activity cannot be found, NameNotFoundException is thrown.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link #getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param activityName Name of the activity whose banner is to be retrieved.
+      * @return Returns the image of the banner, or null if the activity has no
+      *         banner specified.
+@@ -8394,6 +8416,10 @@ public abstract class PackageManager {
+      * Retrieve the icon associated with an application.  If it has not defined
+      * an icon, the default app icon is returned.  Does not return null.
+      *
++     * <p>Note: The returned drawable's dimensions are capped to a maximum size of
++     * {@code 2048 x 2048} pixels. If the resource's intrinsic dimensions exceed this limit,
++     * it will be downsampled automatically, preserving its aspect ratio.</p>
++     *
+      * @param info Information about application being queried.
+      *
+      * @return Returns the image of the icon, or the default application icon
+@@ -8410,6 +8436,10 @@ public abstract class PackageManager {
+      * getApplicationIcon() to return its icon. If the application cannot be
+      * found, NameNotFoundException is thrown.
+      *
++     * <p>Note: The returned drawable's dimensions are capped to a maximum size of
++     * {@code 2048 x 2048} pixels. If the resource's intrinsic dimensions exceed this limit,
++     * it will be downsampled automatically, preserving its aspect ratio.</p>
++     *
+      * @param packageName Name of the package whose application icon is to be
+      *                    retrieved.
+      *
+@@ -8441,6 +8471,9 @@ public abstract class PackageManager {
+      * getApplicationIcon() to return its banner. If the application cannot be
+      * found, NameNotFoundException is thrown.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link #getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param packageName Name of the package whose application banner is to be
+      *            retrieved.
+      * @return Returns the image of the banner or null if the application has no
+@@ -8459,6 +8492,9 @@ public abstract class PackageManager {
+      * {@link ComponentInfo#loadLogo ComponentInfo.loadLogo()} to return its
+      * logo. If the activity cannot be found, NameNotFoundException is thrown.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link #getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param activityName Name of the activity whose logo is to be retrieved.
+      * @return Returns the image of the logo or null if the activity has no logo
+      *         specified.
+@@ -8512,6 +8548,9 @@ public abstract class PackageManager {
+      * getApplicationLogo() to return its logo. If the application cannot be
+      * found, NameNotFoundException is thrown.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link #getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param packageName Name of the package whose application logo is to be
+      *                    retrieved.
+      *
+diff --git a/core/java/android/content/pm/ResolveInfo.java b/core/java/android/content/pm/ResolveInfo.java
+index 25bb9e163..1c4a48bf1 100644
+--- a/core/java/android/content/pm/ResolveInfo.java
++++ b/core/java/android/content/pm/ResolveInfo.java
+@@ -300,6 +300,9 @@ public class ResolveInfo implements Parcelable {
+      * will call back on the given PackageManager to load the icon from
+      * the application.
+      *
++     * <p>The returned drawable is subject to the same size capping limits as described
++     * in {@link PackageManager#getApplicationIcon(ApplicationInfo)}.</p>
++     *
+      * @param pm A PackageManager from which the icon can be loaded; usually
+      * the PackageManager from which you originally retrieved this item.
+      *
+@@ -310,12 +313,13 @@ public class ResolveInfo implements Parcelable {
+     public Drawable loadIcon(PackageManager pm) {
+         Drawable dr = null;
+         if (resolvePackageName != null && iconResourceId != 0) {
+-            dr = pm.getDrawable(resolvePackageName, iconResourceId, null);
++            dr = pm.getDrawableInternal(
++                    resolvePackageName, iconResourceId, null, /* isIcon= */ true);
+         }
+         ComponentInfo ci = getComponentInfo();
+         if (dr == null && iconResourceId != 0) {
+             ApplicationInfo ai = ci.applicationInfo;
+-            dr = pm.getDrawable(ci.packageName, iconResourceId, ai);
++            dr = pm.getDrawableInternal(ci.packageName, iconResourceId, ai, /* isIcon= */ true);
+         }
+         if (dr != null) {
+             return pm.getUserBadgedIcon(dr, new UserHandle(pm.getUserId()));
+diff --git a/core/java/android/content/res/Resources.java b/core/java/android/content/res/Resources.java
+index 248ef1d4d..5902a9870 100644
+--- a/core/java/android/content/res/Resources.java
++++ b/core/java/android/content/res/Resources.java
+@@ -944,6 +944,32 @@ public class Resources {
+         return getDrawableForDensity(id, 0, theme);
+     }
+ 
++    /**
++     * Return a drawable object associated with a particular resource ID and styled for the
++     * specified theme for a given screen density, applying a cap to prevent excessively large
++     * dimensions.
++     *
++     * @param id The desired resource identifier.
++     * @param density The desired screen density in DPI.
++     * @param theme The theme used to style the drawable attributes, may be {@code null}.
++     * @return Drawable An object that can be used to draw this resource.
++     * @throws NotFoundException Throws NotFoundException if the given ID does not exist.
++     * @hide
++     */
++    @Nullable
++    public Drawable getDrawableForDensityCapped(@DrawableRes int id, int density,
++            @Nullable Theme theme)
++            throws NotFoundException {
++        final TypedValue value = obtainTempTypedValue();
++        try {
++            final ResourcesImpl impl = mResourcesImpl;
++            impl.getValueForDensity(id, density, value, true);
++            return impl.loadDrawable(this, value, id, density, theme, /* isCapped= */ true);
++        } finally {
++            releaseTempTypedValue(value);
++        }
++    }
++
+     /**
+      * Return a drawable object associated with a particular resource ID for the
+      * given screen density in DPI. This will set the drawable's density to be
+diff --git a/core/java/android/content/res/ResourcesImpl.java b/core/java/android/content/res/ResourcesImpl.java
+index c240d2118..4401c6166 100644
+--- a/core/java/android/content/res/ResourcesImpl.java
++++ b/core/java/android/content/res/ResourcesImpl.java
+@@ -51,6 +51,7 @@ import android.util.AttributeSet;
+ import android.util.DisplayMetrics;
+ import android.util.Log;
+ import android.util.LongSparseArray;
++import android.util.Size;
+ import android.util.Slog;
+ import android.util.TypedValue;
+ import android.util.Xml;
+@@ -95,6 +96,8 @@ public class ResourcesImpl {
+ 
+     private static final int ID_OTHER = 0x01000004;
+ 
++    private static final int MAX_ICON_SIZE = 2048;
++
+     private static final Object sSync = new Object();
+ 
+     private static boolean sPreloaded;
+@@ -692,10 +695,17 @@ public class ResourcesImpl {
+     Drawable loadDrawable(@NonNull Resources wrapper, @NonNull TypedValue value, int id,
+             int density, @Nullable Resources.Theme theme)
+             throws NotFoundException {
++        return loadDrawable(wrapper, value, id, density, theme, /* isCapped= */ false);
++    }
++
++    @Nullable
++    Drawable loadDrawable(@NonNull Resources wrapper, @NonNull TypedValue value, int id,
++            int density, @Nullable Resources.Theme theme, boolean isCapped)
++            throws NotFoundException {
+         // If the drawable's XML lives in our current density qualifier,
+         // it's okay to use a scaled version from the cache. Otherwise, we
+         // need to actually load the drawable from XML.
+-        final boolean useCache = density == 0 || value.density == mMetrics.densityDpi;
++        final boolean useCache = (density == 0 || value.density == mMetrics.densityDpi);
+ 
+         // Pretend the requested density is actually the display density. If
+         // the drawable returned is not the requested density, then force it
+@@ -732,7 +742,7 @@ public class ResourcesImpl {
+             } else {
+                 isColorDrawable = false;
+                 caches = mDrawableCache;
+-                key = (((long) value.assetCookie) << 32) | value.data;
++                key = cacheKeyForCookieAsset(value.assetCookie, value.data, isCapped);
+             }
+ 
+             int cacheGeneration = caches.getGeneration();
+@@ -763,7 +773,7 @@ public class ResourcesImpl {
+             } else if (isColorDrawable) {
+                 dr = new ColorDrawable(value.data);
+             } else {
+-                dr = loadDrawableForCookie(wrapper, value, id, density);
++                dr = loadDrawableForCookie(wrapper, value, id, density, isCapped);
+             }
+             // DrawableContainer' constant state has drawables instances. In order to leave the
+             // constant state intact in the cache, we need to create a new DrawableContainer after
+@@ -895,12 +905,15 @@ public class ResourcesImpl {
+      */
+     @Nullable
+     private Drawable decodeImageDrawable(@NonNull AssetInputStream ais,
+-            @NonNull Resources wrapper, @NonNull TypedValue value) {
++            @NonNull Resources wrapper, @NonNull TypedValue value, boolean isCapped) {
+         ImageDecoder.Source src = new ImageDecoder.AssetInputStreamSource(ais,
+                 wrapper, value);
+         try {
+             return ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
++                if (isCapped) {
++                    capImageSize(decoder, info);
++                }
+             });
+         } catch (IOException ioe) {
+             // This is okay. This may be something that ImageDecoder does not
+@@ -910,11 +923,15 @@ public class ResourcesImpl {
+     }
+ 
+     @Nullable
+-    private Drawable decodeImageDrawable(@NonNull FileInputStream fis, @NonNull Resources wrapper) {
++    private Drawable decodeImageDrawable(@NonNull FileInputStream fis, @NonNull Resources wrapper,
++            boolean isCapped) {
+         ImageDecoder.Source src = ImageDecoder.createSource(wrapper, fis);
+         try {
+             return ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
++                if (isCapped) {
++                    capImageSize(decoder, info);
++                }
+             });
+         } catch (IOException ioe) {
+             // This is okay. This may be something that ImageDecoder does not
+@@ -923,6 +940,34 @@ public class ResourcesImpl {
+         }
+     }
+ 
++    private void capImageSize(@NonNull ImageDecoder decoder, @NonNull ImageDecoder.ImageInfo info) {
++        Size size = info.getSize();
++        int originalWidth = size.getWidth();
++        int originalHeight = size.getHeight();
++        if (originalWidth > MAX_ICON_SIZE || originalHeight > MAX_ICON_SIZE) {
++            int maxDm = Math.max(originalWidth, originalHeight);
++            int targetWidth = Math.max(1, (int) (((long) originalWidth * MAX_ICON_SIZE) / maxDm));
++            int targetHeight = Math.max(1, (int) (((long) originalHeight * MAX_ICON_SIZE) / maxDm));
++            decoder.setTargetSize(targetWidth, targetHeight);
++        }
++    }
++
++    /**
++     * Generates a unique 64-bit cache key from the asset cookie and resource data offset.
++     *
++     * Key Structure (64-bit long):
++     * - Bit 63 (MSB): Partition flag. Set to 1 if the resource is capped (downsampled) to
++     *                 guarantee cache isolation. Set to 0 for standard (uncapped) resources.
++     * - Bits 32-62: Asset cookie (shifted left by 32). Identifies the source package/APK.
++     * - Bits 0-31: Resource data offset/identifier.
++     */
++    private static long cacheKeyForCookieAsset(int assetCookie, int data, boolean isCapped) {
++        long key = (((long) assetCookie) << 32) | data;
++        // assetCookie is always positive - it's 1-based index allocated by native AssetManager.
++        // So, (assetCookie << 32) will always have 0 at bit 31, leaving it free for manipulation.
++        return isCapped ? (key | (1L << 63)) : key;
++    }
++
+     /**
+      * Loads a drawable from XML or resources stream.
+      *
+@@ -930,7 +975,7 @@ public class ResourcesImpl {
+      */
+     @Nullable
+     private Drawable loadDrawableForCookie(@NonNull Resources wrapper, @NonNull TypedValue value,
+-            int id, int density) {
++            int id, int density, boolean isCapped) {
+         if (value.string == null) {
+             throw new NotFoundException("Resource \"" + getResourceName(id) + "\" ("
+                     + Integer.toHexString(id) + ") is not a Drawable (color or path): " + value);
+@@ -991,12 +1036,12 @@ public class ResourcesImpl {
+                             offset,
+                             size);
+                     FileInputStream is = afd.createInputStream();
+-                    dr = decodeImageDrawable(is, wrapper);
++                    dr = decodeImageDrawable(is, wrapper, isCapped);
+                 } else {
+                     final InputStream is = mAssets.openNonAsset(
+                             value.assetCookie, file, AssetManager.ACCESS_STREAMING);
+                     final AssetInputStream ais = (AssetInputStream) is;
+-                    dr = decodeImageDrawable(ais, wrapper, value);
++                    dr = decodeImageDrawable(ais, wrapper, value, isCapped);
+                 }
+             } finally {
+                 stack.pop();
+@@ -1096,7 +1141,8 @@ public class ResourcesImpl {
+     @Nullable
+     private ComplexColor loadComplexColorFromName(Resources wrapper, Resources.Theme theme,
+             TypedValue value, int id) {
+-        final long key = (((long) value.assetCookie) << 32) | value.data;
++        final long key = cacheKeyForCookieAsset(value.assetCookie, value.data,
++                /* isCapped= */ false);
+         final ConfigurationBoundResourceCache<ComplexColor> cache = mComplexColorCache;
+         ComplexColor complexColor = cache.getInstance(key, wrapper, theme);
+         if (complexColor != null) {
+@@ -1140,7 +1186,8 @@ public class ResourcesImpl {
+             }
+         }
+ 
+-        final long key = (((long) value.assetCookie) << 32) | value.data;
++        final long key = cacheKeyForCookieAsset(value.assetCookie, value.data,
++                /* isCapped= */ false);
+ 
+         // Handle inline color definitions.
+         if (value.type >= TypedValue.TYPE_FIRST_COLOR_INT
+@@ -1182,7 +1229,8 @@ public class ResourcesImpl {
+             }
+         }
+ 
+-        final long key = (((long) value.assetCookie) << 32) | value.data;
++        final long key = cacheKeyForCookieAsset(value.assetCookie, value.data,
++                /* isCapped= */ false);
+ 
+         // Handle inline color definitions.
+         if (value.type >= TypedValue.TYPE_FIRST_COLOR_INT
+diff --git a/core/java/android/os/Binder.java b/core/java/android/os/Binder.java
+index b7556dfb5..8a8bd3ed6 100644
+--- a/core/java/android/os/Binder.java
++++ b/core/java/android/os/Binder.java
+@@ -1230,6 +1230,24 @@ public class Binder implements IBinder {
+         onShellCommand(in, out, err, args, callback, resultReceiver);
+     }
+ 
++    /**
++     * Enforces that the calling UID is either {@link Process#ROOT_UID}
++     * or {@link Process#SHELL_UID}. If not, sends a failure code to
++     * {@code resultReceiver} (if non-null) and throws a
++     * {@link SecurityException}.
++     *
++     * @hide
++     */
++    public static void enforceShellCommandUid(@Nullable ResultReceiver resultReceiver) {
++        final int callingUid = Binder.getCallingUid();
++        if (callingUid != Process.ROOT_UID && callingUid != Process.SHELL_UID) {
++            if (resultReceiver != null) {
++                resultReceiver.send(-1, null);
++            }
++            throw new SecurityException("Shell commands are only callable by ADB");
++        }
++    }
++
+     /**
+      * Handle a call to {@link #shellCommand}.
+      *
+@@ -1246,12 +1264,7 @@ public class Binder implements IBinder {
+             @Nullable FileDescriptor err,
+             @NonNull String[] args, @Nullable ShellCallback callback,
+             @NonNull ResultReceiver resultReceiver) throws RemoteException {
+-
+-        final int callingUid = Binder.getCallingUid();
+-        if (callingUid != Process.ROOT_UID && callingUid != Process.SHELL_UID) {
+-            resultReceiver.send(-1, null);
+-            throw new SecurityException("Shell commands are only callable by ADB");
+-        }
++        enforceShellCommandUid(resultReceiver);
+ 
+         // First, convert in, out and err to @NonNull, by redirecting any that's null to /dev/null.
+         try {
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 671d0c935..4fb2a2b4a 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -11624,6 +11624,10 @@ public final class ViewRootImpl implements ViewParent,
+ 
+         @Override
+         public void requestScrollCapture(IScrollCaptureResponseListener listener) {
++            final int callingUid = Binder.getCallingUid();
++            if (callingUid != Process.SYSTEM_UID && callingUid != Process.myUid()) {
++                return;
++            }
+             final ViewRootImpl viewAncestor = mViewAncestor.get();
+             if (viewAncestor != null) {
+                 viewAncestor.dispatchScrollCaptureRequest(listener);
+@@ -11632,8 +11636,14 @@ public final class ViewRootImpl implements ViewParent,
+ 
+         @Override
+         public void dumpWindow(ParcelFileDescriptor pfd) {
++            final int callingUid = Binder.getCallingUid();
++            if (callingUid != Process.SYSTEM_UID && callingUid != Process.myUid()) {
++                IoUtils.closeQuietly(pfd);
++                return;
++            }
+             final ViewRootImpl viewAncestor = mViewAncestor.get();
+             if (viewAncestor == null) {
++                IoUtils.closeQuietly(pfd);
+                 return;
+             }
+             viewAncestor.mHandler.postAtFrontOfQueue(() -> {
+diff --git a/core/java/android/view/WindowlessWindowManager.java b/core/java/android/view/WindowlessWindowManager.java
+index d7d764b6c..79f46b601 100644
+--- a/core/java/android/view/WindowlessWindowManager.java
++++ b/core/java/android/view/WindowlessWindowManager.java
+@@ -720,7 +720,11 @@ public class WindowlessWindowManager implements IWindowSession {
+         for (State windowInfo : mStateForWindow.values()) {
+             int changes = windowInfo.mLastReportedParams.copyFrom(windowInfo.mParams);
+             hasChanges |= (changes != 0);
+-            params[index++] = windowInfo.mParams;
++            WindowManager.LayoutParams p = new WindowManager.LayoutParams();
++            p.copyFrom(windowInfo.mParams);
++            p.token = null;
++            p.mWindowContextToken = null;
++            params[index++] = p;
+         }
+ 
+         if (hasChanges) {
+diff --git a/core/java/android/widget/RemoteViews.java b/core/java/android/widget/RemoteViews.java
+index 8bd966b28..2f6d0bd8e 100644
+--- a/core/java/android/widget/RemoteViews.java
++++ b/core/java/android/widget/RemoteViews.java
+@@ -3749,13 +3749,11 @@ public class RemoteViews implements Parcelable, Filter {
+             Object tag = button.getTag(R.id.remote_checked_change_listener_tag);
+             // Temporarily unset the checked change listener so calling setChecked doesn't launch
+             // the intent.
+-            if (tag instanceof OnCheckedChangeListener) {
+-                button.setOnCheckedChangeListener(null);
+-                button.setChecked(mChecked);
+-                button.setOnCheckedChangeListener((OnCheckedChangeListener) tag);
+-            } else {
+-                button.setChecked(mChecked);
+-            }
++            OnCheckedChangeListener saved = (tag instanceof OnCheckedChangeListener)
++                    ? (OnCheckedChangeListener) tag : null;
++            button.setOnCheckedChangeListener(null);
++            button.setChecked(mChecked);
++            button.setOnCheckedChangeListener(saved);
+         }
+ 
+         @Override
+@@ -3783,6 +3781,18 @@ public class RemoteViews implements Parcelable, Filter {
+             dest.writeInt(mCheckedId);
+         }
+ 
++        private static void forAllCompoundButtons(ViewGroup group,
++                Consumer<CompoundButton> consumer) {
++            for (int i = 0; i < group.getChildCount(); i++) {
++                View child = group.getChildAt(i);
++                if (child instanceof CompoundButton cb) {
++                    consumer.accept(cb);
++                } else if (child instanceof ViewGroup vg) {
++                    forAllCompoundButtons(vg, consumer);
++                }
++            }
++        }
++
+         @Override
+         public void apply(View root, ViewGroup rootParent, ActionApplyParams params)
+                 throws ActionException {
+@@ -3796,30 +3806,22 @@ public class RemoteViews implements Parcelable, Filter {
+ 
+             RadioGroup group = (RadioGroup) target;
+ 
+-            // Temporarily unset all the checked change listeners while we check the group.
+-            for (int i = 0; i < group.getChildCount(); i++) {
+-                View child = group.getChildAt(i);
+-                if (!(child instanceof CompoundButton)) continue;
+-
+-                Object tag = child.getTag(R.id.remote_checked_change_listener_tag);
+-                if (!(tag instanceof OnCheckedChangeListener)) continue;
+-
+-                // Clear the checked change listener, we'll restore it after the check.
+-                ((CompoundButton) child).setOnCheckedChangeListener(null);
+-            }
+-
++            // Temporarily unset all checked change listeners across the entire subtree while we check the group.
++            forAllCompoundButtons(group, cb -> {
++                Object tag = cb.getTag(R.id.remote_checked_change_listener_tag);
++                if (tag instanceof OnCheckedChangeListener) {
++                    cb.setOnCheckedChangeListener(null);
++                }
++            });
+             group.check(mCheckedId);
+ 
+-            // Loop through the children again and restore the checked change listeners.
+-            for (int i = 0; i < group.getChildCount(); i++) {
+-                View child = group.getChildAt(i);
+-                if (!(child instanceof CompoundButton)) continue;
+-
+-                Object tag = child.getTag(R.id.remote_checked_change_listener_tag);
+-                if (!(tag instanceof OnCheckedChangeListener)) continue;
+-
+-                ((CompoundButton) child).setOnCheckedChangeListener((OnCheckedChangeListener) tag);
+-            }
++            // Restore checked change listeners across the entire subtree.
++            forAllCompoundButtons(group, cb -> {
++                Object tag = cb.getTag(R.id.remote_checked_change_listener_tag);
++                if (tag instanceof OnCheckedChangeListener listener) {
++                    cb.setOnCheckedChangeListener(listener);
++                }
++            });
+         }
+ 
+         @Override
+diff --git a/core/tests/coretests/src/android/content/res/ResourcesDrawableTest.java b/core/tests/coretests/src/android/content/res/ResourcesDrawableTest.java
+index f7f9569c4..781055a0f 100644
+--- a/core/tests/coretests/src/android/content/res/ResourcesDrawableTest.java
++++ b/core/tests/coretests/src/android/content/res/ResourcesDrawableTest.java
+@@ -21,6 +21,8 @@ import static org.junit.Assert.assertNotNull;
+ import static org.junit.Assert.assertTrue;
+ 
+ import android.content.Context;
++import android.graphics.Bitmap;
++import android.graphics.drawable.BitmapDrawable;
+ import android.graphics.drawable.ColorStateListDrawable;
+ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.LayerDrawable;
+@@ -80,4 +82,69 @@ public class ResourcesDrawableTest {
+         Drawable drawable = resources.getDrawable(R.color.drawable_in_color_dir_valid);
+         assertTrue(drawable instanceof LayerDrawable);
+     }
++
++    @Test
++    public void testGetDrawableCapped_downsamplesLargeResource() {
++        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
++        Resources resources = context.getResources();
++
++        // Load the massive 16,000 x 16,000 px image via the capped API
++        Drawable drawable = resources.getDrawableForDensityCapped(
++                com.android.frameworks.coretests.R.drawable.test16000x16000, 0, null);
++
++        assertNotNull("Capped drawable should not be null", drawable);
++        assertTrue("Capped drawable should be a BitmapDrawable",
++                drawable instanceof BitmapDrawable);
++
++        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
++
++        // The original image is 16,000 x 16,000. Under our cap of 2048,
++        // it should be scaled down to exactly 2048 x 2048 px.
++        assertEquals("Width should be capped to 2048 px", 2048, bitmap.getWidth());
++        assertEquals("Height should be capped to 2048 px", 2048, bitmap.getHeight());
++    }
++
++    @Test
++    public void testGetDrawableCapped_doesNotPolluteSharedCache() {
++        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
++        Resources resources = context.getResources();
++
++        // 1. Load the massive image via the capped API first
++        Drawable cappedDrawable = resources.getDrawableForDensityCapped(
++                com.android.frameworks.coretests.R.drawable.test16000x16000, 0, null);
++        assertNotNull(cappedDrawable);
++        assertEquals(2048, cappedDrawable.getIntrinsicWidth());
++
++        // 2. Load the same image using the standard uncapped API.
++        Drawable uncappedDrawable = resources.getDrawable(
++                com.android.frameworks.coretests.R.drawable.test16000x16000, null);
++        // Assert that cache isolation works:
++        // The uncapped load must either fail (return null) because it attempted to load
++        // the full 16,000px image and failed,
++        // or return the original large image (width > 2048).
++        // It must NEVER return the cached downsampled version (which would be non-null
++        // with width == 2048).
++        if (uncappedDrawable != null) {
++            assertEquals("Cache pollution occurred! The uncapped load should have returned the "
++                            + "original uncapped version (width == 16000 px)",
++                    16000, uncappedDrawable.getIntrinsicWidth());
++        }
++    }
++
++    @Test
++    public void testGetDrawableCapped_usesCache() {
++        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
++        Resources resources = context.getResources();
++
++        Drawable doc1 = resources.getDrawableForDensityCapped(
++                com.android.frameworks.coretests.R.drawable.test16000x16000, 0, null);
++        Drawable doc2 = resources.getDrawableForDensityCapped(
++                com.android.frameworks.coretests.R.drawable.test16000x16000, 0, null);
++
++        assertNotNull("First loaded capped drawable should not be null", doc1);
++        assertNotNull("Second loaded capped drawable should not be null", doc2);
++        // If caching works, both calls return a drawable sharing the same constant state
++        assertEquals("Caching failed! Capped drawables should share the same ConstantState",
++                doc1.getConstantState(), doc2.getConstantState());
++    }
+ }
+diff --git a/core/tests/coretests/src/android/widget/RemoteViewsTest.java b/core/tests/coretests/src/android/widget/RemoteViewsTest.java
+index c8ea3742b..3ba55b57a 100644
+--- a/core/tests/coretests/src/android/widget/RemoteViewsTest.java
++++ b/core/tests/coretests/src/android/widget/RemoteViewsTest.java
+@@ -20,6 +20,7 @@ import static com.android.internal.R.id.pending_intent_tag;
+ 
+ import static org.junit.Assert.assertArrayEquals;
+ import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertFalse;
+ import static org.junit.Assert.assertNotNull;
+ import static org.junit.Assert.assertNull;
+ import static org.junit.Assert.assertSame;
+@@ -70,6 +71,7 @@ import java.util.HashMap;
+ import java.util.Map;
+ import java.util.concurrent.CountDownLatch;
+ import java.util.function.Consumer;
++import org.junit.Ignore;
+ 
+ /**
+  * Tests for RemoteViews.
+@@ -645,6 +647,80 @@ public class RemoteViewsTest {
+                 index, inflated.getTag(com.android.internal.R.id.notification_action_index_tag));
+     }
+ 
++    private RemoteViews createRemoteViewsWithClobberedCheckedListener(int layoutId) {
++        RemoteViews views = new RemoteViews(mPackage, layoutId);
++        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
++                new Intent("dummy_action").setPackage(mContext.getPackageName()),
++                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE);
++        views.setOnCheckedChangeResponse(R.id.value_two,
++                RemoteViews.RemoteResponse.fromPendingIntent(pi));
++
++        int tagKey = com.android.internal.R.id.remote_checked_change_listener_tag;
++        views.setIntTag(R.id.value_two, tagKey, 0);
++        return views;
++    }
++
++    private RemoteViews createRemoteViewsWithClobberedCheckedListener() {
++        return createRemoteViewsWithClobberedCheckedListener(R.layout.radiogroup_checkedchild);
++    }
++
++    @Ignore("b/529138788")
++    @Test
++    public void setCompoundButtonChecked_doesNotFireListenerWhenClobbered() throws Exception {
++        RemoteViews views = createRemoteViewsWithClobberedCheckedListener();
++        views.setCompoundButtonChecked(R.id.value_two, true);
++
++        boolean[] interactionFired = new boolean[1];
++        RemoteViews.InteractionHandler handler = (view, pendingIntent, response) -> {
++            interactionFired[0] = true;
++            return true;
++        };
++
++        views.apply(mContext, mContainer, handler);
++
++        assertFalse("Interaction should not have been fired!", interactionFired[0]);
++    }
++
++    @Test
++    public void setRadioGroupChecked_doesNotFireListenerWhenClobbered() throws Exception {
++        RemoteViews views = createRemoteViewsWithClobberedCheckedListener();
++        views.setRadioGroupChecked(R.id.group, R.id.value_two);
++
++        boolean[] interactionFired = new boolean[1];
++        RemoteViews.InteractionHandler handler = (view, pendingIntent, response) -> {
++            interactionFired[0] = true;
++            return true;
++        };
++
++        views.apply(mContext, mContainer, handler);
++
++        assertFalse("Interaction should not have been fired on RadioGroup check!",
++                interactionFired[0]);
++    }
++
++    @Test
++    public void setRadioGroupChecked_doesNotFireListenerOnNestedChildWhenClobbered()
++            throws Exception {
++        RemoteViews views = new RemoteViews(mPackage, R.layout.radiogroup_checkedchild);
++        RemoteViews nestedContainer = new RemoteViews(mPackage, R.layout.remote_view_host);
++        RemoteViews nestedRadio = createRemoteViewsWithClobberedCheckedListener(
++                R.layout.radiogroup_checkedchild);
++        nestedContainer.addView(R.id.container, nestedRadio);
++        views.addView(R.id.group, nestedContainer);
++        views.setRadioGroupChecked(R.id.group, R.id.value_two);
++
++        boolean[] interactionFired = new boolean[1];
++        RemoteViews.InteractionHandler handler = (view, pendingIntent, response) -> {
++            interactionFired[0] = true;
++            return true;
++        };
++
++        views.apply(mContext, mContainer, handler);
++
++        assertFalse("Interaction should not have been fired on nested RadioGroup check!",
++                interactionFired[0]);
++    }
++
+     @Test
+     public void nestedViews_themesPropagateCorrectly() {
+         Context themedContext =
+diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorTest.kt b/packages/SystemUI/multivalentTests/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorTest.kt
+index d44724f67..56f840688 100644
+--- a/packages/SystemUI/multivalentTests/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorTest.kt
++++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorTest.kt
+@@ -19,30 +19,75 @@ package com.android.systemui.volume.panel.domain.interactor
+ import androidx.test.ext.junit.runners.AndroidJUnit4
+ import androidx.test.filters.SmallTest
+ import com.android.systemui.SysuiTestCase
+-import com.android.systemui.kosmos.testScope
+-import com.android.systemui.testKosmos
++import com.android.systemui.authentication.data.repository.fakeAuthenticationRepository
++import com.android.systemui.authentication.shared.model.AuthenticationMethodModel
++import com.android.systemui.keyguard.data.repository.fakeKeyguardRepository
++import com.android.systemui.kosmos.Kosmos
++import com.android.systemui.kosmos.runTest
++import com.android.systemui.plugins.ActivityStarter
++import com.android.systemui.plugins.activityStarter
++import com.android.systemui.scene.domain.interactor.sceneInteractor
++import com.android.systemui.scene.shared.model.Scenes
++import com.android.systemui.testKosmosNew
+ import com.google.common.truth.Truth.assertThat
+-import kotlinx.coroutines.test.runTest
++import org.junit.Before
+ import org.junit.Test
+ import org.junit.runner.RunWith
++import org.mockito.ArgumentMatchers.anyBoolean
++import org.mockito.kotlin.any
++import org.mockito.kotlin.whenever
+ 
+ @SmallTest
+ @RunWith(AndroidJUnit4::class)
+ class VolumePanelGlobalStateInteractorTest : SysuiTestCase() {
+ 
+-    private val kosmos = testKosmos()
++    private val kosmos = testKosmosNew()
+ 
+-    private val underTest = kosmos.volumePanelGlobalStateInteractor
++    private val underTest by lazy { kosmos.volumePanelGlobalStateInteractor }
++
++    @Before
++    fun setUp() {
++        whenever(kosmos.activityStarter.dismissKeyguardThenExecute(any(), any(), anyBoolean()))
++            .then { (it.arguments[0] as ActivityStarter.OnDismissAction).onDismiss() }
++    }
++
++    @Test
++    fun changeVisibility_changesVisibility() = kosmos.runTest {
++        setDeviceEntered(true)
++
++        underTest.setVisible(false)
++        assertThat(underTest.globalState.value.isVisible).isFalse()
++
++        underTest.setVisible(true)
++        assertThat(underTest.globalState.value.isVisible).isTrue()
++    }
+ 
+     @Test
+-    fun changeVisibility_changesVisibility() =
+-        with(kosmos) {
+-            testScope.runTest {
+-                underTest.setVisible(false)
+-                assertThat(underTest.globalState.value.isVisible).isFalse()
+-
+-                underTest.setVisible(true)
+-                assertThat(underTest.globalState.value.isVisible).isTrue()
+-            }
++    fun setVisible_noOpWhenDeviceNotEntered() = kosmos.runTest {
++        setDeviceEntered(false)
++
++        underTest.setVisible(true)
++        assertThat(underTest.globalState.value.isVisible).isFalse()
++    }
++
++    @Test
++    fun globalState_becomesInvisibleWhenDeviceNotEntered() = kosmos.runTest {
++        setDeviceEntered(true)
++
++        underTest.setVisible(true)
++        assertThat(underTest.globalState.value.isVisible).isTrue()
++
++        setDeviceEntered(false)
++        assertThat(underTest.globalState.value.isVisible).isFalse()
++    }
++
++    private fun Kosmos.setDeviceEntered(isEntered: Boolean) {
++        if (isEntered) {
++            fakeAuthenticationRepository.setAuthenticationMethod(AuthenticationMethodModel.None)
++            fakeKeyguardRepository.setKeyguardEnabled(true)
++            sceneInteractor.changeScene(Scenes.Gone, "reason")
++        } else {
++            sceneInteractor.changeScene(Scenes.Lockscreen, "reason")
+         }
++    }
+ }
+diff --git a/packages/SystemUI/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImpl.kt b/packages/SystemUI/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImpl.kt
+index 143d66b69..24fd3bc88 100644
+--- a/packages/SystemUI/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImpl.kt
++++ b/packages/SystemUI/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImpl.kt
+@@ -17,8 +17,7 @@
+ package com.android.systemui.media.controls.domain.pipeline
+ 
+ import android.annotation.SuppressLint
+-import android.app.ActivityOptions
+-import android.app.BroadcastOptions
++import android.annotation.UserIdInt
+ import android.app.Notification
+ import android.app.Notification.EXTRA_SUBSTITUTE_APP_NAME
+ import android.app.PendingIntent
+@@ -826,8 +825,12 @@ class LegacyMediaDataManagerImpl(
+             }
+         }
+ 
++        val appUid = appInfo?.uid ?: Process.INVALID_UID
+         // Album art
+-        var artworkBitmap = metadata?.let { loadBitmapFromUri(it) }
++        var artworkBitmap =
++            metadata?.let {
++                loadBitmapFromUri(it, sbn.user.identifier, appUid, sbn.packageName)
++            }
+         if (artworkBitmap == null) {
+             artworkBitmap = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
+         }
+@@ -911,7 +914,6 @@ class LegacyMediaDataManagerImpl(
+ 
+         val currentEntry = mediaEntries.get(key)
+         val instanceId = currentEntry?.instanceId ?: logger.getNewInstanceId()
+-        val appUid = appInfo?.uid ?: Process.INVALID_UID
+ 
+         if (isNewlyActiveEntry) {
+             logSingleVsMultipleMediaAdded(appUid, sbn.packageName, instanceId)
+@@ -1255,11 +1257,17 @@ class LegacyMediaDataManagerImpl(
+     }
+ 
+     /** Load a bitmap from the various Art metadata URIs */
+-    private fun loadBitmapFromUri(metadata: MediaMetadata): Bitmap? {
++    private fun loadBitmapFromUri(
++        metadata: MediaMetadata,
++        @UserIdInt userId: Int,
++        appUid: Int,
++        packageName: String,
++    ): Bitmap? {
+         for (uri in ART_URIS) {
+             val uriString = metadata.getString(uri)
+             if (!TextUtils.isEmpty(uriString)) {
+-                val albumArt = loadBitmapFromUri(Uri.parse(uriString))
++                val albumArt =
++                    loadBitmapFromUriForUser(Uri.parse(uriString), userId, appUid, packageName)
+                 if (albumArt != null) {
+                     if (DEBUG) Log.d(TAG, "loaded art from $uri")
+                     return albumArt
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractor.kt b/packages/SystemUI/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractor.kt
+index e930aca05..04089db1e 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractor.kt
+@@ -17,22 +17,71 @@
+ package com.android.systemui.volume.panel.domain.interactor
+ 
+ import com.android.systemui.dagger.SysUISingleton
++import com.android.systemui.dagger.qualifiers.Application
++import com.android.systemui.deviceentry.domain.interactor.DeviceEntryInteractor
++import com.android.systemui.plugins.ActivityStarter
+ import com.android.systemui.volume.panel.data.repository.VolumePanelGlobalStateRepository
+ import com.android.systemui.volume.panel.shared.model.VolumePanelGlobalState
+ import javax.inject.Inject
++import kotlin.coroutines.resume
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.flow.SharingStarted
+ import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.launchIn
++import kotlinx.coroutines.flow.mapLatest
++import kotlinx.coroutines.flow.onEach
++import kotlinx.coroutines.flow.stateIn
++import kotlinx.coroutines.suspendCancellableCoroutine
+ 
+ @SysUISingleton
+ class VolumePanelGlobalStateInteractor
+ @Inject
+ constructor(
++    @param:Application private val coroutineScope: CoroutineScope,
++    private val deviceEntryInteractor: DeviceEntryInteractor,
+     private val repository: VolumePanelGlobalStateRepository,
++    private val activityStarter: ActivityStarter,
+ ) {
+ 
+-    val globalState: StateFlow<VolumePanelGlobalState>
+-        get() = repository.globalState
++    val globalState: StateFlow<VolumePanelGlobalState> =
++        repository.globalState
++            .mapLatest { state ->
++                if (state.isVisible) {
++                    awaitKeyguard()
++                }
++                state
++            }
++            .stateIn(coroutineScope, SharingStarted.Eagerly, VolumePanelGlobalState(false))
++
++    init {
++        deviceEntryInteractor.isDeviceEntered
++            .onEach { isDeviceEntered ->
++                if (!isDeviceEntered) {
++                    setVisible(false)
++                }
++            }
++            .launchIn(coroutineScope)
++    }
+ 
+     fun setVisible(isVisible: Boolean) {
++        if (isVisible && !deviceEntryInteractor.isDeviceEntered.value) {
++            return
++        }
+         repository.updateVolumePanelState { it.copy(isVisible = isVisible) }
+     }
++
++    private suspend fun awaitKeyguard() {
++        return suspendCancellableCoroutine { continuation ->
++            activityStarter.dismissKeyguardThenExecute(
++                /* action = */ {
++                    if (continuation.isActive) {
++                        continuation.resume(Unit)
++                    }
++                    false
++                },
++                /* cancel = */ {},
++                /* afterKeyguardGone = */ true,
++            )
++        }
++    }
+ }
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/ui/navigation/VolumeNavigator.kt b/packages/SystemUI/src/com/android/systemui/volume/ui/navigation/VolumeNavigator.kt
+index 3da725b9a..03c8af902 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/ui/navigation/VolumeNavigator.kt
++++ b/packages/SystemUI/src/com/android/systemui/volume/ui/navigation/VolumeNavigator.kt
+@@ -97,14 +97,7 @@ constructor(
+     }
+ 
+     private fun showNewVolumePanel() {
+-        activityStarter.dismissKeyguardThenExecute(
+-            /* action = */ {
+-                volumePanelGlobalStateInteractor.setVisible(true)
+-                false
+-            },
+-            /* cancel = */ {},
+-            /* afterKeyguardGone = */ true,
+-        )
++        volumePanelGlobalStateInteractor.setVisible(true)
+     }
+ 
+     private fun createNewVolumePanelDialog(): Dialog {
+diff --git a/packages/SystemUI/tests/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImplTest.kt b/packages/SystemUI/tests/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImplTest.kt
+index bdee9365d..97ce84a23 100644
+--- a/packages/SystemUI/tests/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImplTest.kt
++++ b/packages/SystemUI/tests/src/com/android/systemui/media/controls/domain/pipeline/LegacyMediaDataManagerImplTest.kt
+@@ -2392,6 +2392,115 @@ class LegacyMediaDataManagerImplTest : SysuiTestCase() {
+         assertThat(mediaDataCaptor.value.artwork).isNull()
+     }
+ 
++    @Test
++    @EnableFlags(Flags.FLAG_MEDIA_CONTROLS_POSTS_OPTIMIZATION)
++    fun postDuplicateNotification_doesNotCallListeners() {
++        addNotificationAndLoad()
++        reset(listener)
++        mediaDataManager.onNotificationAdded(KEY, mediaNotification)
++
++        testScope.assertRunAllReady(foreground = 0, background = 1)
++        verify(listener, never())
++            .onMediaDataLoaded(
++                eq(KEY),
++                eq(KEY),
++                capture(mediaDataCaptor),
++                eq(true),
++                eq(0),
++                eq(false),
++            )
++        verify(kosmos.mediaLogger).logDuplicateMediaNotification(eq(KEY))
++    }
++
++    @Test
++    @DisableFlags(Flags.FLAG_MEDIA_CONTROLS_POSTS_OPTIMIZATION)
++    fun postDuplicateNotification_callsListeners() {
++        addNotificationAndLoad()
++        reset(listener)
++        mediaDataManager.onNotificationAdded(KEY, mediaNotification)
++        testScope.assertRunAllReady(foreground = 1, background = 1)
++        verify(listener)
++            .onMediaDataLoaded(
++                eq(KEY),
++                eq(KEY),
++                capture(mediaDataCaptor),
++                eq(true),
++                eq(0),
++                eq(false),
++            )
++        verify(kosmos.mediaLogger, never()).logDuplicateMediaNotification(eq(KEY))
++    }
++
++    private fun TestScope.assertRunAllReady(foreground: Int = 0, background: Int = 0) {
++        runCurrent()
++        if (Flags.mediaLoadMetadataViaMediaDataLoader()) {
++            advanceUntilIdle()
++            // It doesn't make much sense to count tasks when we use coroutines in loader
++            // so this check is skipped in that scenario.
++            backgroundExecutor.runAllReady()
++            foregroundExecutor.runAllReady()
++        } else {
++            if (background > 0) {
++                assertThat(backgroundExecutor.runAllReady()).isEqualTo(background)
++            }
++            if (foreground > 0) {
++                assertThat(foregroundExecutor.runAllReady()).isEqualTo(foreground)
++            }
++        }
++    }
++
++    @Test
++    fun testMediaDataLoaded_hasArtPermission_artLoaded() {
++        // When media is loaded and user/app has permission to access the art URI,
++        whenever(
++                ugm.checkGrantUriPermission_ignoreNonSystem(
++                        anyInt(),
++                        any(),
++                        any(),
++                        anyInt(),
++                        anyInt()
++                )
++            )
++            .thenReturn(1)
++        val uri = Uri.parse("content://example")
++        val artwork = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
++        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, uri.toString())
++        whenever(controller.metadata).thenReturn(metadataBuilder.build())
++        whenever(ImageDecoder.createSource(any(), any<Uri>())).thenReturn(imageSource)
++        whenever(ImageDecoder.decodeBitmap(any(), any())).thenReturn(artwork)
++
++        addNotificationAndLoad()
++
++        // Then the artwork is loaded
++        assertThat(mediaDataCaptor.value.artwork).isNotNull()
++    }
++
++    @Test
++    fun testMediaDataLoaded_noArtPermission_noArtLoaded() {
++        // When media is loaded and user/app does not have permission to access the art URI
++        whenever(
++                ugm.checkGrantUriPermission_ignoreNonSystem(
++                        anyInt(),
++                        any(),
++                        any(),
++                        anyInt(),
++                        anyInt()
++                )
++            )
++            .thenThrow(SecurityException("Test no permission"))
++        val artwork = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
++        val uri = Uri.parse("content://example")
++        metadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, uri.toString())
++        whenever(controller.metadata).thenReturn(metadataBuilder.build())
++        whenever(ImageDecoder.createSource(any(), any<Uri>())).thenReturn(imageSource)
++        whenever(ImageDecoder.decodeBitmap(any(), any())).thenReturn(artwork)
++
++        addNotificationAndLoad()
++
++        // Then the artwork is not loaded
++        assertThat(mediaDataCaptor.value.artwork).isNull()
++    }
++
+     /** Helper function to add a basic media notification and capture the resulting MediaData */
+     private fun addNotificationAndLoad() {
+         addNotificationAndLoad(mediaNotification)
+diff --git a/packages/SystemUI/tests/utils/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorKosmos.kt b/packages/SystemUI/tests/utils/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorKosmos.kt
+index 6e523648c..672f76075 100644
+--- a/packages/SystemUI/tests/utils/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorKosmos.kt
++++ b/packages/SystemUI/tests/utils/src/com/android/systemui/volume/panel/domain/interactor/VolumePanelGlobalStateInteractorKosmos.kt
+@@ -16,8 +16,17 @@
+ 
+ package com.android.systemui.volume.panel.domain.interactor
+ 
++import com.android.systemui.deviceentry.domain.interactor.deviceEntryInteractor
+ import com.android.systemui.kosmos.Kosmos
++import com.android.systemui.kosmos.applicationCoroutineScope
++import com.android.systemui.plugins.activityStarter
+ import com.android.systemui.volume.panel.data.repository.volumePanelGlobalStateRepository
+ 
+-val Kosmos.volumePanelGlobalStateInteractor: VolumePanelGlobalStateInteractor by
+-    Kosmos.Fixture { VolumePanelGlobalStateInteractor(volumePanelGlobalStateRepository) }
++val Kosmos.volumePanelGlobalStateInteractor: VolumePanelGlobalStateInteractor by Kosmos.Fixture {
++    VolumePanelGlobalStateInteractor(
++        coroutineScope = applicationCoroutineScope,
++        activityStarter = activityStarter,
++        deviceEntryInteractor = deviceEntryInteractor,
++        repository = volumePanelGlobalStateRepository,
++    )
++}
+diff --git a/services/core/java/com/android/server/accounts/AccountManagerService.java b/services/core/java/com/android/server/accounts/AccountManagerService.java
+index 73c5e024a..b7d024145 100644
+--- a/services/core/java/com/android/server/accounts/AccountManagerService.java
++++ b/services/core/java/com/android/server/accounts/AccountManagerService.java
+@@ -2126,6 +2126,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onResult(Bundle result) {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             Bundle.setDefusable(result, true);
+             IAccountManagerResponse response = getResponseAndClose();
+             if (response != null) {
+@@ -2476,6 +2479,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onResult(Bundle result) {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             Bundle.setDefusable(result, true);
+             if (result != null && result.containsKey(AccountManager.KEY_BOOLEAN_RESULT)
+                     && !result.containsKey(AccountManager.KEY_INTENT)) {
+@@ -3648,6 +3654,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onResult(Bundle result) {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             Bundle.setDefusable(result, true);
+             mNumResults++;
+             Intent intent = null;
+@@ -4302,6 +4311,10 @@ public class AccountManagerService
+                 new AccountAuthenticatorResponse(new IAccountAuthenticatorResponse.Stub() {
+             @Override
+             public void onResult(Bundle value) throws RemoteException {
++                if (!UserHandle.isSameApp(Binder.getCallingUid(), Process.SYSTEM_UID)) {
++                    Slog.w(TAG, "onResult: the caller is not system");
++                    return;
++                }
+                 handleAuthenticatorResponse(true);
+             }
+ 
+@@ -4312,6 +4325,10 @@ public class AccountManagerService
+ 
+             @Override
+             public void onError(int errorCode, String errorMessage) throws RemoteException {
++                if (!UserHandle.isSameApp(Binder.getCallingUid(), Process.SYSTEM_UID)) {
++                    Slog.w(TAG, "onError: the caller is not system");
++                    return;
++                }
+                 handleAuthenticatorResponse(false);
+             }
+ 
+@@ -4411,6 +4428,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onResult(Bundle result) {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             Bundle.setDefusable(result, true);
+             mNumResults++;
+             if (result == null) {
+@@ -4983,7 +5003,7 @@ public class AccountManagerService
+         protected boolean mCanStartAccountManagerActivity = false;
+         protected final UserAccounts mAccounts;
+ 
+-        private int mAuthenticatorUid;
++        private volatile int mAuthenticatorUid;
+         private long mBindingStartTime;
+ 
+         public Session(UserAccounts accounts, IAccountManagerResponse response, String accountType,
+@@ -5022,6 +5042,21 @@ public class AccountManagerService
+             }
+         }
+ 
++        boolean callerIsAuthenticatorOrSystem() {
++            final int callingUid = Binder.getCallingUid();
++            if (UserHandle.isSameApp(callingUid, Process.SYSTEM_UID)) {
++                return true;
++            }
++            if (UserHandle.isSameApp(callingUid, mAuthenticatorUid)) {
++                return true;
++            }
++
++            Slog.w(TAG, "the caller is neither system nor authenticator: callingUid="
++                    + callingUid + ", mAuthenticatorUid=" + mAuthenticatorUid);
++            return false;
++        }
++
++
+         IAccountManagerResponse getResponseAndClose() {
+             if (mAuthenticatorUid != 0 && mBindingStartTime > 0) {
+                 sResponseLatency.logSampleWithUid(mAuthenticatorUid,
+@@ -5253,6 +5288,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onResult(Bundle result) {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             Bundle.setDefusable(result, true);
+             mNumResults++;
+             Intent intent = null;
+@@ -5352,6 +5390,9 @@ public class AccountManagerService
+ 
+         @Override
+         public void onRequestContinued() {
++            if (!callerIsAuthenticatorOrSystem()) {
++                return;
++            }
+             mNumRequestContinued++;
+         }
+ 
+@@ -5399,6 +5440,7 @@ public class AccountManagerService
+                         + " which isn't encryption aware");
+                 return false;
+             }
++            mAuthenticatorUid = authenticatorInfo.uid;
+ 
+             Intent intent = new Intent();
+             intent.setAction(AccountManager.ACTION_AUTHENTICATOR_INTENT);
+@@ -5413,11 +5455,11 @@ public class AccountManagerService
+             if (!mContext.bindServiceAsUser(intent, this, Context.BindServiceFlags.of(flags),
+                     UserHandle.of(mAccounts.userId))) {
+                 Log.w(TAG, "bindService to " + authenticatorInfo.componentName + " failed");
++                mBindingStartTime = 0;
+                 // Perform unbind as per documentation at Context.bindServiceAsUser
+                 mContext.unbindService(this);
+                 return false;
+             }
+-            mAuthenticatorUid = authenticatorInfo.uid;
+             mBindingStartTime = SystemClock.uptimeMillis();
+             return true;
+         }
+diff --git a/services/core/java/com/android/server/am/AppTimeTracker.java b/services/core/java/com/android/server/am/AppTimeTracker.java
+index 2da6a33d2..07e5331ef 100644
+--- a/services/core/java/com/android/server/am/AppTimeTracker.java
++++ b/services/core/java/com/android/server/am/AppTimeTracker.java
+@@ -90,8 +90,18 @@ public class AppTimeTracker {
+         extras.putBundle(ActivityOptions.EXTRA_USAGE_TIME_REPORT_PACKAGES, pkgs);
+         Intent fillinIntent = new Intent();
+         fillinIntent.putExtras(extras);
++        ActivityOptions options = ActivityOptions.makeBasic();
++        options.setPendingIntentBackgroundActivityStartMode(
++                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED);
+         try {
+-            mReceiver.send(context, 0, fillinIntent);
++            mReceiver.send(
++                    context,
++                    /* code= */ 0,
++                    fillinIntent,
++                    /* onFinished= */ null,
++                    /* handler= */ null,
++                    /* requiredPermission= */ null,
++                    options.toBundle());
+         } catch (PendingIntent.CanceledException e) {
+         }
+     }
+diff --git a/services/core/java/com/android/server/audio/MusicFxHelper.java b/services/core/java/com/android/server/audio/MusicFxHelper.java
+index cf0b2ae15..b90ffcfdd 100644
+--- a/services/core/java/com/android/server/audio/MusicFxHelper.java
++++ b/services/core/java/com/android/server/audio/MusicFxHelper.java
+@@ -230,7 +230,8 @@ public class MusicFxHelper {
+         }
+         final PackageManager pm = context.getPackageManager();
+         // TODO this should target a user-selected panel
+-        List<ResolveInfo> ril = pm.queryBroadcastReceivers(intent, 0 /* flags */);
++        List<ResolveInfo> ril = pm.queryBroadcastReceivers(intent,
++                PackageManager.MATCH_SYSTEM_ONLY);
+         if (ril != null && ril.size() != 0) {
+             ResolveInfo ri = ril.get(0);
+             final String senderPackageName = intent.getStringExtra(AudioEffect.EXTRA_PACKAGE_NAME);
+@@ -238,14 +239,25 @@ public class MusicFxHelper {
+                 Log.w(TAG, "Intent package name must not be null");
+                 return;
+             }
++
+             try {
+                 if (ri != null && ri.activityInfo != null && ri.activityInfo.packageName != null) {
+                     final int senderUid = pm.getPackageUidAsUser(senderPackageName,
+                             PackageManager.PackageInfoFlags.of(MATCH_ANY_USER), getCurrentUserId());
+-                    intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+-                    intent.setPackage(ri.activityInfo.packageName);
+-                    if (setMusicFxServiceWithObserver(intent, senderUid, senderPackageName)) {
+-                        context.sendBroadcastAsUser(intent, UserHandle.ALL);
++                    Intent cleanIntent = new Intent(intent.getAction());
++                    cleanIntent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, senderPackageName);
++                    cleanIntent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION,
++                            intent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION,
++                                    AudioManager.AUDIO_SESSION_ID_GENERATE));
++                    if (intent.hasExtra(AudioEffect.EXTRA_CONTENT_TYPE)) {
++                        cleanIntent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE,
++                                intent.getIntExtra(AudioEffect.EXTRA_CONTENT_TYPE,
++                                        AudioEffect.CONTENT_TYPE_MUSIC));
++                    }
++                    cleanIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
++                    cleanIntent.setPackage(ri.activityInfo.packageName);
++                    if (setMusicFxServiceWithObserver(cleanIntent, senderUid, senderPackageName)) {
++                        context.sendBroadcastAsUser(cleanIntent, UserHandle.ALL);
+                     }
+                     return;
+                 }
+diff --git a/services/core/java/com/android/server/locales/LocaleManagerService.java b/services/core/java/com/android/server/locales/LocaleManagerService.java
+index 4851a81d3..ace18ab36 100644
+--- a/services/core/java/com/android/server/locales/LocaleManagerService.java
++++ b/services/core/java/com/android/server/locales/LocaleManagerService.java
+@@ -762,6 +762,18 @@ public class LocaleManagerService extends SystemService {
+                 false /* allowAll */, ActivityManagerInternal.ALLOW_NON_FULL,
+                 "getOverrideLocaleConfig", /* callerPackage= */ null);
+ 
++        if (getPackageUid(appPackageName, userId) < 0) {
++            return null;
++        }
++
++        if (!isPackageOwnedByCaller(appPackageName, userId, null, null)
++                && !isCallerInstaller(appPackageName, userId)
++                && !(isCallerFromCurrentInputMethod(userId)
++                    && mActivityManagerInternal.isAppForeground(
++                            getPackageUid(appPackageName, userId)))) {
++            enforceReadAppSpecificLocalesPermission("getOverrideLocaleConfig");
++        }
++
+         final File file = getXmlFileNameForUser(appPackageName, userId);
+         if (!file.exists()) {
+             if (DEBUG) {
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index c39a2d923..0703d2d80 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -1354,6 +1354,10 @@ final class InstallPackageHelper {
+ 
+         String pkgName = parsedPackage.getPackageName();
+         request.setName(pkgName);
++        if (mPm.isPackageDeviceAdmin(pkgName, request.getUserId()) && onExternal) {
++            throw new PrepareFailure(INSTALL_FAILED_INVALID_INSTALL_LOCATION,
++                    "Device Admin can only be installed on internal storage.");
++        }
+         if (parsedPackage.isTestOnly()) {
+             if ((installFlags & PackageManager.INSTALL_ALLOW_TEST) == 0) {
+                 throw new PrepareFailure(INSTALL_FAILED_TEST_ONLY,
+@@ -1466,6 +1470,20 @@ final class InstallPackageHelper {
+                 if (libraryInfo != null) {
+                     signatureCheckPs = mPm.mSettings.getPackageLPr(libraryInfo.getPackageName());
+                 }
++
++                WatchedLongSparseArray<SharedLibraryInfo> libraryInfos =
++                        mSharedLibraries.getSharedLibraryInfos(
++                                parsedPackage.getStaticSharedLibraryName());
++                if (libraryInfos != null && libraryInfos.size() > 0) {
++                    SharedLibraryInfo anyStaticLib = libraryInfos.valueAt(0);
++                    if (anyStaticLib.isStatic() && !anyStaticLib.getDeclaringPackage()
++                            .getPackageName().equals(parsedPackage.getManifestPackageName())) {
++                        throw new PrepareFailure(INSTALL_FAILED_DUPLICATE_PACKAGE,
++                                "The static library being installed has a different declaring"
++                                        + " package than existing static library with the same"
++                                        + " name");
++                    }
++                }
+             }
+ 
+             if (signatureCheckPs != null) {
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerService.java b/services/core/java/com/android/server/pm/PackageInstallerService.java
+index bc33099b7..9334314c1 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerService.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerService.java
+@@ -685,6 +685,17 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
+             }
+         }
+ 
++        if ((params.installFlags & PackageManager.INSTALL_ENABLE_ROLLBACK) != 0) {
++            if (mContext.checkCallingOrSelfPermission(Manifest.permission.MANAGE_ROLLBACKS)
++                    != PackageManager.PERMISSION_GRANTED &&
++                    mContext.checkCallingOrSelfPermission(Manifest.permission.TEST_MANAGE_ROLLBACKS)
++                    != PackageManager.PERMISSION_GRANTED) {
++                throw new SecurityException(
++                        "INSTALL_ENABLE_ROLLBACK requires the MANAGE_ROLLBACKS permission or the "
++                                + "TEST_MANAGE_ROLLBACKS permission");
++            }
++        }
++
+         // App package name and label length is restricted so that really long strings aren't
+         // written to disk.
+         if (params.appPackageName != null && !isValidPackageName(params.appPackageName)) {
+@@ -958,6 +969,11 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
+                     Binder.restoreCallingIdentity(ident);
+                 }
+             }
++            if (params.volumeUuid != null && params.appPackageName != null
++                    && mPm.isPackageDeviceAdmin(params.appPackageName, userId)) {
++                throw new IllegalArgumentException(
++                        "Device Admin can only be installed on internal storage.");
++            }
+         }
+ 
+         int requestedInstallerPackageUid = INVALID_UID;
+diff --git a/services/core/java/com/android/server/wm/BackgroundActivityStartController.java b/services/core/java/com/android/server/wm/BackgroundActivityStartController.java
+index 0ff08d4cf..3ddfaed3a 100644
+--- a/services/core/java/com/android/server/wm/BackgroundActivityStartController.java
++++ b/services/core/java/com/android/server/wm/BackgroundActivityStartController.java
+@@ -695,7 +695,7 @@ public class BackgroundActivityStartController {
+                     Process.getAppUidForSdkSandboxUid(state.mRealCallingUid);
+             // realCallingSdkSandboxUidToAppUid should probably just be used instead (or in addition
+             // to realCallingUid when calculating resultForRealCaller below.
+-            if (mService.hasActiveVisibleWindow(realCallingSdkSandboxUidToAppUid)) {
++            if (mService.hasActiveVisibleNotPinnedWindow(realCallingSdkSandboxUidToAppUid)) {
+                 state.setResultForRealCaller(new BalVerdict(BAL_ALLOW_SDK_SANDBOX,
+                         /*background*/ false,
+                         "uid in SDK sandbox has visible (non-toast) window"));
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index e9d9a8b94..e7dad418c 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -1233,6 +1233,7 @@ public class WindowManagerService extends IWindowManager.Stub
+     @Override
+     public void onShellCommand(FileDescriptor in, FileDescriptor out, FileDescriptor err,
+             String[] args, ShellCallback callback, ResultReceiver result) {
++        Binder.enforceShellCommandUid(result);
+         new WindowManagerShellCommand(this).exec(this, in, out, err, args, callback, result);
+     }
+ 
+diff --git a/services/core/java/com/android/server/wm/WindowState.java b/services/core/java/com/android/server/wm/WindowState.java
+index 7ca036e9b..9af0bff8b 100644
+--- a/services/core/java/com/android/server/wm/WindowState.java
++++ b/services/core/java/com/android/server/wm/WindowState.java
+@@ -19,6 +19,7 @@ package com.android.server.wm;
+ import static android.app.ActivityTaskManager.INVALID_TASK_ID;
+ import static android.app.AppOpsManager.MODE_ALLOWED;
+ import static android.app.AppOpsManager.MODE_DEFAULT;
++import static android.app.AppOpsManager.OP_SYSTEM_ALERT_WINDOW;
+ import static android.app.AppOpsManager.OP_NONE;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+@@ -183,6 +184,7 @@ import static com.android.window.flags.Flags.explicitRefreshRateHints;
+ import static com.android.window.flags.Flags.secureWindowState;
+ import static com.android.window.flags.Flags.surfaceTrustedOverlay;
+ 
++import android.Manifest;
+ import android.annotation.CallSuper;
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
+@@ -192,6 +194,7 @@ import android.app.admin.DevicePolicyCache;
+ import android.app.servertransaction.WindowStateInsetsControlChangeItem;
+ import android.app.servertransaction.WindowStateResizeItem;
+ import android.content.Context;
++import android.content.pm.PackageManager;
+ import android.content.res.Configuration;
+ import android.graphics.Matrix;
+ import android.graphics.PixelFormat;
+@@ -3199,8 +3202,18 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
+         if (mAppOpVisibility) {
+             // There is a race between the check and the finish calls but this is fine
+             // as this would mean we will get another change callback and will reconcile.
+-            int mode = mWmService.mAppOps.checkOpNoThrow(mAppOp, uid, packageName);
+-            if (mode != MODE_ALLOWED && mode != MODE_DEFAULT) {
++            // OP_SYSTEM_ALERT_WINDOW defaults to MODE_DEFAULT. If the app has the static
++            // SYSTEM_ALERT_WINDOW permission, it is allowed to draw overlays. Otherwise,
++            // we must revoke visibility (e.g. when a temporary grant like MediaProjection ends
++            // and the AppOp reverts to MODE_DEFAULT).
++            final int mode = mWmService.mAppOps.checkOpNoThrow(mAppOp, uid, packageName);
++            final boolean allowed = (mode == MODE_ALLOWED)
++                    || (mAppOp != OP_SYSTEM_ALERT_WINDOW && mode == MODE_DEFAULT)
++                    || (mAppOp == OP_SYSTEM_ALERT_WINDOW && mode == MODE_DEFAULT
++                            && mWmService.mContext.checkPermission(
++                                    Manifest.permission.SYSTEM_ALERT_WINDOW, getPid(), uid)
++                            == PackageManager.PERMISSION_GRANTED);
++            if (!allowed) {
+                 mWmService.mAppOps.finishOp(mAppOp, uid, packageName, null /* featureId */);
+                 setAppOpVisibilityLw(false);
+             }
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyEngine.java b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyEngine.java
+index 669a999c9..343690c6f 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyEngine.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyEngine.java
+@@ -2113,7 +2113,15 @@ final class DevicePolicyEngine {
+                         policyKey = PolicyDefinition.readPolicyKeyFromXml(parser);
+                         break;
+                     case TAG_POLICY_STATE_ENTRY:
+-                        policyState = PolicyState.readFromXml(parser);
++                        if (policyDefinition == null) {
++                            Slogf.w(TAG, "Skipping policy state - unknown policy definition");
++                        } else {
++                            try {
++                                policyState = PolicyState.readFromXml(policyDefinition, parser);
++                            } catch (IllegalArgumentException e) {
++                                Slogf.wtf(TAG, "Error parsing policy state", e);
++                            }
++                        }
+                         break;
+                     default:
+                         Slogf.wtf(TAG, "Unknown tag for local policy entry" + tag);
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+index 3cb89dbf8..59b66badd 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+@@ -2306,6 +2306,7 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
+             if (policy != null) {
+                 mUserData.remove(userHandle);
+             }
++            deleteUserTransferOwnershipMetadataFileLocked(userHandle);
+ 
+             File policyFile =
+                     new File(mPathProvider.getUserSystemDirectory(userHandle), DEVICE_POLICIES_XML);
+@@ -19810,6 +19811,15 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
+         }
+     }
+ 
++    private void deleteUserTransferOwnershipMetadataFileLocked(int userHandle) {
++        if (mTransferOwnershipMetadataManager.metadataFileExists()) {
++            final var metadata = mTransferOwnershipMetadataManager.loadMetadataFile();
++            if (metadata != null && metadata.userId == userHandle) {
++                deleteTransferOwnershipMetadataFileLocked();
++            }
++        }
++    }
++
+     private void deleteTransferOwnershipMetadataFileLocked() {
+         mTransferOwnershipMetadataManager.deleteMetadataFile();
+     }
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/EnforcingAdmin.java b/services/devicepolicy/java/com/android/server/devicepolicy/EnforcingAdmin.java
+index 02590f97a..1371086a4 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/EnforcingAdmin.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/EnforcingAdmin.java
+@@ -38,6 +38,7 @@ import org.xmlpull.v1.XmlPullParserException;
+ import java.io.IOException;
+ import java.util.HashSet;
+ import java.util.Map;
++import java.util.Arrays;
+ import java.util.Objects;
+ import java.util.Set;
+ 
+@@ -358,7 +359,11 @@ final class EnforcingAdmin {
+             String className = parser.getAttributeValue(/* namespace= */ null, ATTR_CLASS_NAME);
+             ComponentName componentName = className == null
+                     ? null :  new ComponentName(packageName, className);
+-            Set<String> authorities = Set.of(authoritiesStr.split(ATTR_AUTHORITIES_SEPARATOR));
++            String[] authoritiesArray = authoritiesStr.split(ATTR_AUTHORITIES_SEPARATOR);
++            Set<String> authorities = new HashSet<>(Arrays.asList(authoritiesArray));
++            if (authorities.size() != authoritiesArray.length) {
++                Slogf.e(TAG, "Duplicate authorities found in EnforcingAdmin");
++            }
+             // TODO(b/281697976): load active admin
+             return new EnforcingAdmin(packageName, componentName, authorities, userId, null);
+         }
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/LockTaskPolicySerializer.java b/services/devicepolicy/java/com/android/server/devicepolicy/LockTaskPolicySerializer.java
+index 13412d05a..9e38801d9 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/LockTaskPolicySerializer.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/LockTaskPolicySerializer.java
+@@ -26,6 +26,8 @@ import com.android.modules.utils.TypedXmlSerializer;
+ import org.xmlpull.v1.XmlPullParserException;
+ 
+ import java.io.IOException;
++import java.util.Arrays;
++import java.util.HashSet;
+ import java.util.Objects;
+ import java.util.Set;
+ 
+@@ -45,26 +47,23 @@ final class LockTaskPolicySerializer extends PolicySerializer<LockTaskPolicy> {
+                 /* namespace= */ null,
+                 ATTR_PACKAGES,
+                 String.join(ATTR_PACKAGES_SEPARATOR, value.getPackages()));
+-        serializer.attributeInt(
+-                /* namespace= */ null,
+-                ATTR_FLAGS,
+-                value.getFlags());
++        serializer.attributeInt(/* namespace= */ null, ATTR_FLAGS, value.getFlags());
+     }
+ 
+     @Override
+     LockTaskPolicy readFromXml(TypedXmlPullParser parser) {
+-        String packagesStr = parser.getAttributeValue(
+-                /* namespace= */ null,
+-                ATTR_PACKAGES);
++        String packagesStr = parser.getAttributeValue(/* namespace= */ null, ATTR_PACKAGES);
+         if (packagesStr == null) {
+             Log.e(TAG, "Error parsing LockTask policy value.");
+             return null;
+         }
+-        Set<String> packages = Set.of(packagesStr.split(ATTR_PACKAGES_SEPARATOR));
++        String[] packagesArray = packagesStr.split(ATTR_PACKAGES_SEPARATOR);
++        Set<String> packages = new HashSet<>(Arrays.asList(packagesArray));
++        if (packages.size() != packagesArray.length) {
++            Log.e(TAG, "Duplicate packages found in LockTask policy");
++        }
+         try {
+-            int flags = parser.getAttributeInt(
+-                    /* namespace= */ null,
+-                    ATTR_FLAGS);
++            int flags = parser.getAttributeInt(/* namespace= */ null, ATTR_FLAGS);
+             return new LockTaskPolicy(packages, flags);
+         } catch (XmlPullParserException e) {
+             Log.e(TAG, "Error parsing LockTask policy value", e);
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/PackageSetPolicySerializer.java b/services/devicepolicy/java/com/android/server/devicepolicy/PackageSetPolicySerializer.java
+index c4da029c6..8dd92e4aa 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/PackageSetPolicySerializer.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/PackageSetPolicySerializer.java
+@@ -27,6 +27,8 @@ import com.android.modules.utils.TypedXmlSerializer;
+ 
+ import java.io.IOException;
+ import java.util.Objects;
++import java.util.HashSet;
++import java.util.Arrays;
+ import java.util.Set;
+ 
+ // TODO(scottjonathan): Replace with generic set implementation
+@@ -48,7 +50,11 @@ final class PackageSetPolicySerializer extends PolicySerializer<Set<String>> {
+             Log.e(DevicePolicyEngine.TAG, "Error parsing PackageSet policy value.");
+             return null;
+         }
+-        Set<String> values = Set.of(valuesStr.split(ATTR_VALUES_SEPARATOR));
++        String[] valuesArray = valuesStr.split(ATTR_VALUES_SEPARATOR);
++        Set<String> values = new HashSet<>(Arrays.asList(valuesArray));
++        if (values.size() != valuesArray.length) {
++            Log.e(DevicePolicyEngine.TAG, "Duplicate values found in PackageSet policy");
++        }
+         return new PackageSetPolicyValue(values);
+     }
+ }
+diff --git a/services/tests/mockingservicestests/src/com/android/server/pm/InstallPackageHelperTest.kt b/services/tests/mockingservicestests/src/com/android/server/pm/InstallPackageHelperTest.kt
+new file mode 100644
+index 000000000..a206f7b5c
+--- /dev/null
++++ b/services/tests/mockingservicestests/src/com/android/server/pm/InstallPackageHelperTest.kt
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.server.pm
++
++import android.content.pm.PackageManager
++import com.android.server.testutils.whenever
++import com.google.common.truth.Truth.assertThat
++import org.junit.Before
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.junit.runners.JUnit4
++import org.mockito.ArgumentCaptor
++import org.mockito.Mockito.mock
++import org.mockito.Mockito.verify
++import java.io.File
++
++@RunWith(JUnit4::class)
++class InstallPackageHelperTest : PackageHelperTestBase() {
++
++    private lateinit var installPackageHelper: InstallPackageHelper
++
++    @Before
++    override fun setup() {
++        super.setup()
++        // Mock getPreparingPackageParser on mock injector to return our spied packageParser
++        whenever(rule.mocks().injector.preparingPackageParser).thenReturn(rule.mocks().packageParser)
++
++        installPackageHelper = InstallPackageHelper(
++            pms,
++            mock(AppDataHelper::class.java),
++            mock(RemovePackageHelper::class.java),
++            mock(DeletePackageHelper::class.java),
++            broadcastHelper
++        )
++    }
++
++    @Test
++    fun installPackages_deviceAdminOnExternalStorage_failsVerification() {
++        // Create an InstallRequest mock targeting external storage
++        val request = mock(InstallRequest::class.java)
++        whenever(request.volumeUuid).thenReturn("some-external-uuid")
++        whenever(request.installFlags).thenReturn(0)
++        whenever(request.installReason).thenReturn(0)
++        whenever(request.packageLite).thenReturn(null)
++        whenever(request.isArchived).thenReturn(false)
++
++        // Point codePath to the staged DEVICE_ADMIN_PACKAGE's mock base APK path
++        val dummyApkFile =
++            File(
++                File(rule.system().dataAppDirectory, DEVICE_ADMIN_PACKAGE),
++                "base.apk"
++            )
++        whenever(request.codePath).thenReturn(dummyApkFile.absolutePath)
++
++        // Trigger the installation phase using the InstallPackageHelper instance directly
++        val requests = listOf(request)
++        installPackageHelper.installPackagesTraced(requests, null)
++
++        // Capture error callback on request
++        val codeCaptor = ArgumentCaptor.forClass(Int::class.java)
++        val msgCaptor = ArgumentCaptor.forClass(String::class.java)
++        verify(request).setError(codeCaptor.capture(), msgCaptor.capture())
++
++        // Verify that the prepare phase failed specifically because Device Admin cannot be installed externally
++        assertThat(codeCaptor.value).isEqualTo(PackageManager.INSTALL_FAILED_INVALID_INSTALL_LOCATION)
++        assertThat(msgCaptor.value).contains("Device Admin can only be installed on internal storage.")
++    }
++}
+diff --git a/services/tests/servicestests/src/com/android/server/audio/MusicFxHelperTest.java b/services/tests/servicestests/src/com/android/server/audio/MusicFxHelperTest.java
+index d5638e934..354d6c93f 100644
+--- a/services/tests/servicestests/src/com/android/server/audio/MusicFxHelperTest.java
++++ b/services/tests/servicestests/src/com/android/server/audio/MusicFxHelperTest.java
+@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
+ import android.content.pm.ResolveInfo;
+ import android.media.audiofx.AudioEffect;
+ import android.os.Message;
++import android.os.UserHandle;
+ import android.util.Log;
+ 
+ import androidx.test.filters.MediumTest;
+@@ -39,12 +40,14 @@ import org.junit.Assert;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
++import org.mockito.ArgumentCaptor;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.MockitoAnnotations;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.Set;
+ 
+ @MediumTest
+ @RunWith(AndroidJUnit4.class)
+@@ -683,4 +686,77 @@ public class MusicFxHelperTest {
+                 mTestSession1, mTestUid1);
+     }
+ 
++    /**
++     * Verify that broadcast intent for audio effect control session uses MATCH_SYSTEM_ONLY.
++     */
++    @Test
++    public void testBroadcastIntentQueriesSystemOnly() {
++        Log.i(TAG, "running testBroadcastIntentQueriesSystemOnly");
++
++        Intent intent = newIntent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION,
++                mTestPkg1, mTestSession1);
++
++        doReturn(mMockPackageManager).when(mMockContext).getPackageManager();
++        doReturn(mSingleList).when(mMockPackageManager).queryBroadcastReceivers(any(), anyInt());
++        try {
++            doReturn(mTestUid1).when(mMockPackageManager)
++                    .getPackageUidAsUser(eq(mTestPkg1), any(), anyInt());
++            doReturn(mMusicFxUid).when(mMockPackageManager)
++                    .getPackageUidAsUser(eq(mMusicFxPkgName), any(), anyInt());
++        } catch (PackageManager.NameNotFoundException e) {
++            Log.e(TAG, "NameNotFoundException: " + e);
++        }
++
++        mMusicFxHelper.handleAudioEffectBroadcast(mMockContext, intent);
++
++        verify(mMockPackageManager).queryBroadcastReceivers(any(),
++                eq(PackageManager.MATCH_SYSTEM_ONLY));
++    }
++
++    /**
++     * Verify that broadcast intent for audio effect control session is sanitized
++     * to avoid arbitrary extras leaking to 3rd party apps.
++     */
++    @Test
++    public void testBroadcastIntentIsSanitized() {
++        Log.i(TAG, "running testBroadcastIntentIsSanitized");
++
++        Intent intent = newIntent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION,
++                mTestPkg1, mTestSession1);
++        intent.putExtra("LEAK", "sensitive_data"); // Add a malicious extra
++        intent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MOVIE);
++
++        doReturn(mMockPackageManager).when(mMockContext).getPackageManager();
++        doReturn(mSingleList).when(mMockPackageManager).queryBroadcastReceivers(any(), anyInt());
++        try {
++            doReturn(mTestUid1).when(mMockPackageManager)
++                    .getPackageUidAsUser(eq(mTestPkg1), any(), anyInt());
++            doReturn(mMusicFxUid).when(mMockPackageManager)
++                    .getPackageUidAsUser(eq(mMusicFxPkgName), any(), anyInt());
++        } catch (PackageManager.NameNotFoundException e) {
++            Log.e(TAG, "NameNotFoundException: " + e);
++        }
++
++        mMusicFxHelper.handleAudioEffectBroadcast(mMockContext, intent);
++
++        ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
++        verify(mMockContext).sendBroadcastAsUser(intentCaptor.capture(), eq(UserHandle.ALL));
++
++        Intent broadcastedIntent = intentCaptor.getValue();
++        Assert.assertNotNull("Broadcasted intent must have extras",
++                broadcastedIntent.getExtras());
++        Set<String> expectedKeys = Set.of(
++                AudioEffect.EXTRA_PACKAGE_NAME,
++                AudioEffect.EXTRA_AUDIO_SESSION,
++                AudioEffect.EXTRA_CONTENT_TYPE
++        );
++        Assert.assertEquals("Broadcasted intent must contain exactly the expected extras",
++                expectedKeys, broadcastedIntent.getExtras().keySet());
++        Assert.assertEquals(mTestPkg1,
++                broadcastedIntent.getStringExtra(AudioEffect.EXTRA_PACKAGE_NAME));
++        Assert.assertEquals(mTestSession1,
++                broadcastedIntent.getIntExtra(AudioEffect.EXTRA_AUDIO_SESSION, 0));
++        Assert.assertEquals(AudioEffect.CONTENT_TYPE_MOVIE,
++                broadcastedIntent.getIntExtra(AudioEffect.EXTRA_CONTENT_TYPE, -1));
++    }
+ }
+diff --git a/services/tests/servicestests/src/com/android/server/locales/LocaleManagerServiceTest.java b/services/tests/servicestests/src/com/android/server/locales/LocaleManagerServiceTest.java
+index 4cfbb9520..274fcc3a7 100644
+--- a/services/tests/servicestests/src/com/android/server/locales/LocaleManagerServiceTest.java
++++ b/services/tests/servicestests/src/com/android/server/locales/LocaleManagerServiceTest.java
+@@ -366,6 +366,98 @@ public class LocaleManagerServiceTest {
+         assertEquals(DEFAULT_LOCALES, locales);
+     }
+ 
++    @Test(expected = SecurityException.class)
++    public void testGetOverrideLocaleConfig_arbitraryAppWithoutPermission_fails() throws Exception {
++        doReturn(DEFAULT_UID).when(mMockPackageManager)
++                .getPackageUidAsUser(anyString(), any(), anyInt());
++        setUpFailingPermissionCheckFor(Manifest.permission.READ_APP_SPECIFIC_LOCALES);
++
++        try {
++            mLocaleManagerService.getOverrideLocaleConfig(DEFAULT_PACKAGE_NAME, DEFAULT_USER_ID);
++            fail("Expected SecurityException");
++        } finally {
++            verify(mMockContext).enforceCallingOrSelfPermission(
++                    eq(android.Manifest.permission.READ_APP_SPECIFIC_LOCALES),
++                    anyString());
++        }
++    }
++
++    @Test
++    public void testGetOverrideLocaleConfig_packageNotFound_returnsNull() throws Exception {
++        String unknownPackage = "com.unknown.package";
++        doThrow(new PackageManager.NameNotFoundException("Mock"))
++                .when(mMockPackageManager).getPackageUidAsUser(eq(unknownPackage), any(),
++                        anyInt());
++
++        assertNull(mLocaleManagerService.getOverrideLocaleConfig(
++                unknownPackage, DEFAULT_USER_ID));
++    }
++
++    @Test
++    public void testGetOverrideLocaleConfig_packageExists_noConfig_returnsNull() throws Exception {
++        doReturn(DEFAULT_UID).when(mMockPackageManager)
++                .getPackageUidAsUser(eq(DEFAULT_PACKAGE_NAME), any(), anyInt());
++        setUpPassingPermissionCheckFor(Manifest.permission.READ_APP_SPECIFIC_LOCALES);
++
++        assertNull(mLocaleManagerService.getOverrideLocaleConfig(
++                DEFAULT_PACKAGE_NAME, DEFAULT_USER_ID));
++    }
++
++    @Test
++    public void testGetOverrideLocaleConfig_otherUser_unauthorized_throwsSecurityException()
++            throws Exception {
++        String unknownPackage = "com.unknown.package";
++        int otherUserId = 10;
++        doThrow(new SecurityException("Mock"))
++                .when(mMockActivityManager).handleIncomingUser(
++                        anyInt(), anyInt(), eq(otherUserId), anyBoolean(), anyInt(), anyString(),
++                        any());
++
++        try {
++            mLocaleManagerService.getOverrideLocaleConfig(unknownPackage, otherUserId);
++            fail("Expected SecurityException");
++        } catch (SecurityException e) {
++            // expected
++        }
++    }
++
++    @Test
++    public void testGetOverrideLocaleConfig_pathTraversal_bypassFirstDefense_provesVulnerability()
++            throws Exception {
++        String traversalPackageName = "../../10/locale_configs/com.victim";
++
++        // 1. Bypass "Unknown package" check:
++        // Mock PM to return a valid UID for the traversal path
++        doReturn(DEFAULT_UID).when(mMockPackageManager)
++                .getPackageUidAsUser(eq(traversalPackageName), any(), anyInt());
++
++        // 2. Bypass "Permission" check:
++        // Mock Context to ALLOW the READ_APP_SPECIFIC_LOCALES permission
++        setUpPassingPermissionCheckFor(Manifest.permission.READ_APP_SPECIFIC_LOCALES);
++
++        // 3. We expect the call to throw IllegalArgumentException if the path
++        // traversal check works. But we want to see if getAbsolutePath() FAILS to throw it.
++        try {
++            mLocaleManagerService.getOverrideLocaleConfig(
++                    traversalPackageName, DEFAULT_USER_ID);
++            // If we use getAbsolutePath(), it will NOT throw IllegalArgumentException.
++            // It will just try to read the file and return null (or throw
++            // FileNotFoundException which is caught).
++            // So if it returns null, it means the path traversal check was BYPASSED!
++            fail("Vulnerability proven: getAbsolutePath() bypassed! "
++                    + "No IllegalArgumentException thrown.");
++        } catch (IllegalArgumentException e) {
++            if (e.getMessage().contains("Invalid package name")) {
++                // This is the expected behavior if the path traversal check is secure
++                // (using getCanonicalPath).
++                System.out.println(
++                        "Result: Blocked! IllegalArgumentException thrown by path validation.");
++            } else {
++                fail("Result: Threw unexpected IllegalArgumentException: " + e.getMessage());
++            }
++        }
++    }
++
+     private static void assertNoLocalesStored(LocaleList locales) {
+         assertNull(locales);
+     }
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index 6db6844ff..4736393a1 100755
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -1657,6 +1657,10 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
+             return mScreenUnlockedFunctions;
+         }
+ 
++        protected boolean isScreenLocked() {
++            return mScreenLocked;
++        }
++
+         public int getUsbSpeed() {
+             return mUsbSpeed;
+         }
+@@ -2253,8 +2257,13 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
+                     Slog.e(TAG, "Set functions timed out! no reply from usb hal"
+                                 + " ,operationId:" + operationId);
+                     if (msg.arg1 != 1) {
+-                        // Set this since default function may be selected from Developer options
+-                        setEnabledFunctions(mScreenUnlockedFunctions, false, operationId);
++                        // If the screen is locked, we must not enable default data functions
++                        // on timeout to prevent lock-screen bypass.
++                        if (!isScreenLocked()) {
++                            setEnabledFunctions(mScreenUnlockedFunctions, false, operationId);
++                        } else {
++                            setEnabledFunctions(UsbManager.FUNCTION_NONE, false, operationId);
++                        }
+                     }
+                     break;
+                 case MSG_GET_CURRENT_USB_FUNCTIONS:
+@@ -2281,9 +2290,13 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
+                         if (mCurrentFunctions == UsbManager.FUNCTION_ACCESSORY) {
+                             notifyAccessoryModeExit(operationId);
+                         } else {
+-                            // Set this since default function may be selected from Developer
+-                            // options
+-                            setEnabledFunctions(mScreenUnlockedFunctions, false, operationId);
++                            // If the screen is locked, we must not enable default
++                            // data functions on timeout to prevent bypass.
++                            if (!isScreenLocked()) {
++                                setEnabledFunctions(mScreenUnlockedFunctions, false, operationId);
++                            } else {
++                                setEnabledFunctions(UsbManager.FUNCTION_NONE, false, operationId);
++                            }
+                         }
+                     }
+                     break;
