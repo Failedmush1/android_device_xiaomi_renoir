@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Set true if Secure NFC functionality supported for all SKUs -->
+    <bool name="enable_secure_nfc_support">true</bool>
+
+    <!-- List of SKUs where Secure NFC functionality is supported -->
+    <string-array name="config_skuSupportsSecureNfc" translatable="false">
+        <item>renoir</item>
+        <item>renoir_global</item>
+        <item>renoir_jp</item>
+        <item>M2101K9R</item>
+    </string-array>
+</resources>
