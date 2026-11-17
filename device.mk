@@ -36,9 +36,10 @@ PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
     vendor/xiaomi/camera
 
-# WiFi
+# WiFi & SystemUI Overlays
 PRODUCT_PACKAGES += \
-    TargetWifiOverlay
+    TargetWifiOverlay \
+    RenoirSystemUIOverlay
 
 
 # Camera
