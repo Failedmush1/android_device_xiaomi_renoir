@@ -25,21 +25,20 @@ DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/hidl/manifest.xml
 TARGET_INIT_VENDOR_LIB := //$(DEVICE_PATH):libinit_renoir
 TARGET_RECOVERY_DEVICE_MODULES := libinit_renoir
 
-# Kernel
-KERNEL_FRAGMENT_CONFIG := vendor/renoir_QGKI.config
+# Prebuilt Linux 6.18 Kernel
+KERNEL_PATH := device/xiaomi/renoir-kernel-6.18
+TARGET_PREBUILT_KERNEL := $(KERNEL_PATH)/Image
+BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_PATH)/dtbo.img
+TARGET_PREBUILT_DTB := $(KERNEL_PATH)/dtb.img
 
-# Kernel modules
-BOARD_VENDOR_KERNEL_MODULES += \
-    $(KERNEL_MODULES_OUT)/focaltech_touch.ko \
-    $(KERNEL_MODULES_OUT)/fpc1020_tee.ko \
-    $(KERNEL_MODULES_OUT)/goodix_core.ko \
-    $(KERNEL_MODULES_OUT)/goodix_ts_gesture.ko \
-    $(KERNEL_MODULES_OUT)/goodix_ts_tools.ko \
-    $(KERNEL_MODULES_OUT)/qcom-hv-haptics.ko \
-    $(KERNEL_MODULES_OUT)/xiaomi_touch.ko
-BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOOT_KERNEL_MODULES)
+BOARD_VENDOR_KERNEL_MODULES := $(wildcard $(KERNEL_PATH)/vendor_ramdisk/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(wildcard $(KERNEL_PATH)/vendor_ramdisk/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD := $(strip $(shell cat $(KERNEL_PATH)/vendor_ramdisk/modules.load))
+BOARD_VENDOR_RAMDISK_RECOVERY_KERNEL_MODULES_LOAD := $(BOARD_VENDOR_RAMDISK_KERNEL_MODULES_LOAD)
 
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE += clk_ignore_unused pd_ignore_unused
+BOARD_KERNEL_CMDLINE += binder.impl=rust iommu.strict=1 deferred_probe_timeout=30 fw_devlink.sync_state=timeout redwood.nlmsg_legacy
 # Partitions
 BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 
