@@ -30,7 +30,6 @@ KERNEL_FRAGMENT_CONFIG := vendor/renoir_QGKI.config
 
 # Kernel modules
 BOARD_VENDOR_KERNEL_MODULES += \
-    $(KERNEL_MODULES_OUT)/tfa98xx_dlkm.ko \
     $(KERNEL_MODULES_OUT)/focaltech_touch.ko \
     $(KERNEL_MODULES_OUT)/fpc1020_tee.ko \
     $(KERNEL_MODULES_OUT)/goodix_core.ko \
