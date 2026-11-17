@@ -1,0 +1,6 @@
+runtime_resource_overlay {
+    name: "RenoirNfcOverlay",
+    theme: "RenoirNfcOverlay",
+    sdk_version: "current",
+    product_specific: true,
+}

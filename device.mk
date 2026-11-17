@@ -26,20 +26,14 @@ PRODUCT_COPY_FILES += \
 # APN
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/apns-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml
-# Overlays
-DEVICE_PACKAGE_OVERLAYS += \
-    $(LOCAL_PATH)/overlay \
-    $(LOCAL_PATH)/overlay-lineage
-
-# Soong namespaces
-PRODUCT_SOONG_NAMESPACES += \
-    $(LOCAL_PATH) \
-    vendor/xiaomi/camera
-
-# WiFi & SystemUI Overlays
+# RRO Overlays
 PRODUCT_PACKAGES += \
-    TargetWifiOverlay \
-    RenoirSystemUIOverlay
+    RenoirFrameworksOverlay \
+    RenoirNfcOverlay \
+    RenoirSettingsOverlay \
+    RenoirSettingsProviderOverlay \
+    RenoirSystemUIOverlay \
+    TargetWifiOverlay
 
 
 # Camera
