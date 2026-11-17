@@ -22,18 +22,6 @@ if [ ! -f frameworks/base/.patch_applied_nfc_icon ]; then
     touch frameworks/base/.patch_applied_nfc_icon
 fi
 
-
-# Apply 2026 Security Patches to frameworks/base
-if [ ! -f frameworks/base/.patch_applied_security_2026 ]; then
-    if git -C frameworks/base apply --check ../../device/xiaomi/renoir/patches/0003-frameworks-base-Security-patches-2026.patch 2>/dev/null; then
-        echo "Applying 2026 security patches to frameworks/base..."
-        git -C frameworks/base apply ../../device/xiaomi/renoir/patches/0003-frameworks-base-Security-patches-2026.patch
-    else
-        echo "2026 security patches already in frameworks/base."
-    fi
-    touch frameworks/base/.patch_applied_security_2026
-fi
-
 # Apply Keybox attestation support patch to frameworks/base
 if [ ! -f frameworks/base/.patch_applied_keybox_attestation ]; then
     if git -C frameworks/base apply --check ../../device/xiaomi/renoir/patches/0005-PropImitationHooks-Allow-Keybox-attestation-for-strong-integrity.patch 2>/dev/null; then
@@ -43,24 +31,4 @@ if [ ! -f frameworks/base/.patch_applied_keybox_attestation ]; then
         echo "Keybox attestation support already in frameworks/base."
     fi
     touch frameworks/base/.patch_applied_keybox_attestation
-fi
-
-
-# Apply hardware/lineage/compat patch
-if [ -d "hardware/lineage/compat" ] && ! grep -q "libstagefright_foundation-v33" hardware/lineage/compat/Android.bp 2>/dev/null; then
-    echo "Applying hardware/lineage/compat libstagefright_foundation-v33 patch..."
-    patch -d hardware/lineage/compat -p1 < device/xiaomi/renoir/patches/0007-compat-Provide-libstagefright_foundation-v33.patch
-else
-    echo "hardware/lineage/compat libstagefright_foundation-v33 patch is already applied or repo missing."
-fi
-
-# Apply Secure NFC patch to vendor/nxp/opensource/commonsys/packages/apps/Nfc
-if [ ! -f vendor/nxp/opensource/commonsys/packages/apps/Nfc/.patch_applied_secure_nfc ]; then
-    if git -C vendor/nxp/opensource/commonsys/packages/apps/Nfc apply --check ../../../../../device/xiaomi/renoir/patches/0004-Nfc-Enable-Secure-NFC-support.patch 2>/dev/null; then
-        echo "Applying Secure NFC patch to NXP Nfc..."
-        git -C vendor/nxp/opensource/commonsys/packages/apps/Nfc apply ../../../../../device/xiaomi/renoir/patches/0004-Nfc-Enable-Secure-NFC-support.patch
-    else
-        echo "Secure NFC patch already applied or skipped."
-    fi
-    touch vendor/nxp/opensource/commonsys/packages/apps/Nfc/.patch_applied_secure_nfc
 fi
