@@ -43,3 +43,47 @@ if [ ! -f frameworks/base/.patch_applied_keybox_attestation ]; then
     fi
     touch frameworks/base/.patch_applied_keybox_attestation
 fi
+
+# Automated feature patch loader for AOSPA (Credits: suvojeet-sengupta, kenway214)
+renoir_apply_feature_patches() {
+    local top="${T:-$(gettop)}"
+    [ -z "$top" ] && top="$(pwd)"
+    local repo="$top/device/xiaomi/renoir/patches"
+    [ -d "$repo/features" ] || return 0
+
+    echo "renoir: checking and applying feature patches (Credits: suvojeet-sengupta, kenway214)..." >&2
+
+    for patches in $(for feature in "$repo"/features/*/; do
+            echo "${feature}common" "${feature}aospa"
+        done); do
+        [ -d "$patches" ] || continue
+
+        for patch in $(cd "$patches" && find . -name '*.patch' | sort); do
+            patch="${patch#./}"
+            local dir="$top/$(dirname "$patch")"
+            [ -d "$dir" ] || continue
+
+            # Check if patch is already applied
+            if git -C "$dir" apply --check --reverse "$patches/$patch" &>/dev/null; then
+                continue
+            fi
+            local subject="$(git mailinfo /dev/null /dev/null < "$patches/$patch" | sed -n 's/^Subject: //p')"
+            if [ -n "$subject" ] && git -C "$dir" log -n 500 --format=%s 2>/dev/null | grep -Fxq -- "$subject"; then
+                continue
+            fi
+
+            # Apply preserving original author and commit message
+            if git -C "$dir" am -q --3way "$patches/$patch" &>/dev/null; then
+                local author="$(git mailinfo /dev/null /dev/null < "$patches/$patch" | sed -n 's/^Author: //p')"
+                echo "renoir: applied ${patches#"$repo/"}/$patch (Author: ${author:-suvojeet-sengupta})" >&2
+            elif git -C "$dir" apply "$patches/$patch" &>/dev/null; then
+                echo "renoir: applied via fallback ${patches#"$repo/"}/$patch" >&2
+            else
+                git -C "$dir" am --abort &>/dev/null
+            fi
+        done
+    done
+}
+
+renoir_apply_feature_patches
+unset -f renoir_apply_feature_patches
