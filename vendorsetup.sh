@@ -53,7 +53,7 @@ renoir_apply_feature_patches() {
 
     echo "renoir: checking and applying feature patches (Credits: suvojeet-sengupta, kenway214)..." >&2
 
-    for patches in $(for feature in "$repo"/features/*/; do
+    for patches in "$repo" $(for feature in "$repo"/features/*/; do
             echo "${feature}common" "${feature}aospa"
         done); do
         [ -d "$patches" ] || continue
